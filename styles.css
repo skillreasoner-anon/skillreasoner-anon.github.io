@@ -1,0 +1,13 @@
+:root { color-scheme: light; font-family: Arial, Helvetica, sans-serif; color: #242321; background: #faf9f5; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100svh; display: flex; flex-direction: column; }
+main { width: min(900px, 100%); margin: auto; padding: 100px 40px 72px; }
+.eyebrow { color: #a65f49; font-weight: 700; font-size: 16px; letter-spacing: .04em; margin: 0 0 28px; }
+h1 { font-size: clamp(38px, 6vw, 68px); font-weight: 600; letter-spacing: -.04em; line-height: 1.08; margin: 0 0 24px; }
+.subtitle { font-size: clamp(18px, 2.4vw, 25px); color: #5c5a56; line-height: 1.4; margin: 0; }
+.rule { width: 54px; height: 3px; background: #d47558; margin: 40px 0 28px; }
+.summary { max-width: 560px; font-size: 19px; line-height: 1.65; color: #5c5a56; margin: 0; }
+.status { display: flex; align-items: center; gap: 10px; margin: 38px 0 0; font-size: 14px; color: #5c5a56; }
+.status span { width: 7px; height: 7px; background: #a65f49; border-radius: 50%; }
+footer { width: min(900px, 100%); margin: 0 auto; padding: 24px 40px; color: #6f6c67; font-size: 12px; border-top: 1px solid #dedbd4; }
+@media (max-width: 540px) { main { padding: 70px 24px 50px; } footer { padding: 22px 24px; } .summary { font-size: 17px; } }
