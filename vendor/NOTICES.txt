@@ -1,0 +1,12 @@
+Browser simulator dependencies (served locally; no external runtime requests)
+
+Pyodide 0.26.4: https://github.com/pyodide/pyodide (Mozilla Public License 2.0; PYODIDE-LICENSE.txt)
+Python 3.12: https://www.python.org (PSF license; PYTHON-LICENSE.txt)
+Pymunk 6.11.1 / Chipmunk2D: https://github.com/viblo/pymunk (MIT license; PYMUNK-LICENSE.txt)
+CFFI 1.16.0 and pycparser 2.22: wheel license files included alongside this notice.
+IBM Plex Mono Regular: https://github.com/IBM/plex (SIL Open Font License; FONT-LICENSE.txt)
+
+Pyodide runtime sources: https://github.com/pyodide/pyodide/tree/0.26.4
+Runtime binaries: https://cdn.jsdelivr.net/pyodide/v0.26.4/full/
+Pymunk WebAssembly binary: https://github.com/viblo/pymunk/releases/tag/6.11.1
+No changes were made to the distributed dependency binaries.
