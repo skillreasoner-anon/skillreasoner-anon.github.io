@@ -1,349 +1,414 @@
-"""Typed physics and contact primitives for Narrow Door v6."""
-
+"""Retained V6.0 integration and wall corrections, exported from the simulator."""
 from __future__ import annotations
-
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 import math
-from typing import Any, Iterable, Literal, Mapping
-
+import numpy as np
 import pymunk
-
-
-PhysicsProfile = Literal[
-    "narrowdoor_v41_kinematic",
-    "narrowdoor_v61_dynamic_v41_contact_rotation",
-]
-
-
+AGENT_RADIUS = 15
+BLOCK_WALL_PROJECTION_MAX_ITERATIONS = 8
+BLOCK_WALL_PROJECTION_PADDING = 1e-4
+BLOCK_WALL_PROJECTION_EPS = 1e-9
 @dataclass(frozen=True)
-class NarrowDoorV6PhysicsConfig:
-    """Complete controller/load physics identity for the paired v6 environments."""
+class Pose2D:
+    x: float
+    y: float
+    theta: float
+OFFICIAL_T_BLOCK_POLYGONS = (((-60., 30.), (60., 30.), (60., 0.), (-60., 0.)), ((-15., 30.), (-15., 120.), (15., 120.), (15., 30.)))
+def is_pusher_block_projection_mode(env):
+    return False
 
-    physics_profile: PhysicsProfile
-    controller_mode: Literal["kinematic_pd", "force_limited_dynamic_pd"]
-    pusher_body_type: Literal["kinematic", "dynamic"]
-    pusher_mass: float | None
-    pusher_k_p: float
-    pusher_k_v: float
-    pusher_max_force: float | None
-    pusher_max_speed: float | None
-    pusher_wall_collision: bool
-    pusher_load_friction: float
-    load_linear_deceleration: float
-    load_angular_deceleration: float
-    nonpenetration_slop: float
-    nonpenetration_padding: float
-    nonpenetration_max_iterations: int
-
-    def __post_init__(self) -> None:
-        if self.physics_profile == "narrowdoor_v41_kinematic":
-            expected = ("kinematic_pd", "kinematic", None, None, None, True)
-            actual = (
-                self.controller_mode,
-                self.pusher_body_type,
-                self.pusher_mass,
-                self.pusher_max_force,
-                self.pusher_max_speed,
-                self.pusher_wall_collision,
-            )
-            if actual != expected:
-                raise ValueError(
-                    "narrowdoor_v41_kinematic requires the retained kinematic "
-                    "pusher/controller identity"
-                )
-        elif self.physics_profile == "narrowdoor_v61_dynamic_v41_contact_rotation":
-            if self.controller_mode != "force_limited_dynamic_pd":
-                raise ValueError("dynamic v6.1 physics requires force_limited_dynamic_pd")
-            if self.pusher_body_type != "dynamic":
-                raise ValueError("dynamic v6.1 physics requires a dynamic pusher body")
-            if self.pusher_wall_collision:
-                raise ValueError("dynamic v6.1 pusher must ghost through walls")
-            for name in ("pusher_mass", "pusher_max_force", "pusher_max_speed"):
-                value = getattr(self, name)
-                if value is None or not math.isfinite(float(value)) or float(value) <= 0.0:
-                    raise ValueError(f"{name} must be finite and positive")
-        else:
-            raise ValueError(f"unsupported physics_profile {self.physics_profile!r}")
-        for name in ("pusher_k_p", "pusher_k_v"):
-            value = float(getattr(self, name))
-            if not math.isfinite(value) or value <= 0.0:
-                raise ValueError(f"{name} must be finite and positive")
-        for name in (
-            "pusher_load_friction",
-            "load_linear_deceleration",
-            "load_angular_deceleration",
-            "nonpenetration_slop",
-            "nonpenetration_padding",
-        ):
-            value = float(getattr(self, name))
-            if not math.isfinite(value) or value < 0.0:
-                raise ValueError(f"{name} must be finite and non-negative")
-        if int(self.nonpenetration_max_iterations) < 0:
-            raise ValueError("nonpenetration_max_iterations must be non-negative")
-
-    def as_dict(self) -> dict[str, Any]:
-        return asdict(self)
-
-    @classmethod
-    def from_dict(cls, payload: Mapping[str, Any]) -> "NarrowDoorV6PhysicsConfig":
-        return cls(**dict(payload))
+def is_hardened_workspace_boundary_mode(env):
+    return True
 
 
-def narrowdoor_v60_physics_config() -> NarrowDoorV6PhysicsConfig:
-    return NarrowDoorV6PhysicsConfig(
-        physics_profile="narrowdoor_v41_kinematic",
-        controller_mode="kinematic_pd",
-        pusher_body_type="kinematic",
-        pusher_mass=None,
-        pusher_k_p=100.0,
-        pusher_k_v=20.0,
-        pusher_max_force=None,
-        pusher_max_speed=None,
-        pusher_wall_collision=True,
-        pusher_load_friction=0.0,
-        load_linear_deceleration=0.0,
-        load_angular_deceleration=0.0,
-        nonpenetration_slop=0.0,
-        nonpenetration_padding=0.0001,
-        nonpenetration_max_iterations=8,
-    )
+def _pusher_workspace_bounds(env: NarrowDoorPushTEnv) -> tuple[float, float]:
+    lower = float(env.narrow_door_layout.boundary_min) + float(AGENT_RADIUS)
+    upper = float(env.narrow_door_layout.boundary_max) - float(AGENT_RADIUS)
+    if upper <= lower:
+        raise ValueError(
+            "workspace is too small for pusher radius: "
+            f"lower={lower:.3f}, upper={upper:.3f}"
+        )
+    return lower, upper
 
 
-def narrowdoor_v61_physics_config() -> NarrowDoorV6PhysicsConfig:
-    return NarrowDoorV6PhysicsConfig(
-        physics_profile="narrowdoor_v61_dynamic_v41_contact_rotation",
-        controller_mode="force_limited_dynamic_pd",
-        pusher_body_type="dynamic",
-        pusher_mass=1.0,
-        pusher_k_p=60.0,
-        pusher_k_v=15.0,
-        pusher_max_force=2500.0,
-        pusher_max_speed=450.0,
-        pusher_wall_collision=False,
-        pusher_load_friction=0.0,
-        load_linear_deceleration=1000.0,
-        load_angular_deceleration=16.0,
-        nonpenetration_slop=0.1,
-        nonpenetration_padding=0.001,
-        nonpenetration_max_iterations=12,
-    )
-
-
-@dataclass(frozen=True)
-class BlockWallPenetration:
-    depth: float
-    outward_normal: tuple[float, float]
-    contact_point: tuple[float, float]
-
-
-@dataclass(frozen=True)
-class NonpenetrationResult:
-    correction_count: int
-    max_depth: float
-
-
-def apply_force_limited_pd(
-    body: pymunk.Body,
+def _clip_pusher_velocity_to_workspace(
+    env: NarrowDoorPushTEnv,
     *,
-    target: tuple[float, float],
+    velocity_x: float,
+    velocity_y: float,
+    dt: float,
+) -> tuple[float, float]:
+    lower, upper = _pusher_workspace_bounds(env)
+    current_x = float(env.agent.position.x)
+    current_y = float(env.agent.position.y)
+    proposed_x = current_x + float(velocity_x) * float(dt)
+    proposed_y = current_y + float(velocity_y) * float(dt)
+    clipped_x = float(np.clip(proposed_x, lower, upper))
+    clipped_y = float(np.clip(proposed_y, lower, upper))
+    return (
+        (clipped_x - current_x) / float(dt),
+        (clipped_y - current_y) / float(dt),
+    )
+
+
+def _clamp_current_pusher_to_workspace(env: NarrowDoorPushTEnv) -> None:
+    lower, upper = _pusher_workspace_bounds(env)
+    current_x = float(env.agent.position.x)
+    current_y = float(env.agent.position.y)
+    clipped_x = float(np.clip(current_x, lower, upper))
+    clipped_y = float(np.clip(current_y, lower, upper))
+    if clipped_x == current_x and clipped_y == current_y:
+        return
+    env.agent.position = (clipped_x, clipped_y)
+    velocity = env.agent.velocity
+    velocity_x = float(velocity.x)
+    velocity_y = float(velocity.y)
+    if clipped_x != current_x:
+        velocity_x = 0.0
+    if clipped_y != current_y:
+        velocity_y = 0.0
+    env.agent.velocity = (velocity_x, velocity_y)
+
+
+def step_agent_pd_substep(
+    env: NarrowDoorPushTEnv,
+    *,
+    target_x: float,
+    target_y: float,
     k_p: float,
     k_v: float,
-    max_force: float,
-) -> pymunk.Vec2d:
-    displacement = pymunk.Vec2d(float(target[0]), float(target[1])) - body.position
-    force = displacement * float(k_p) - body.velocity * float(k_v)
-    magnitude = float(force.length)
-    if magnitude > float(max_force):
-        force *= float(max_force) / magnitude
-    body.apply_force_at_world_point(force, body.position)
-    return force
-
-
-def integrate_pusher_velocity(
-    body: pymunk.Body,
-    gravity: tuple[float, float],
-    damping: float,
     dt: float,
-    *,
-    max_speed: float,
 ) -> None:
-    del damping
-    pymunk.Body.update_velocity(body, gravity, 1.0, float(dt))
-    speed = float(body.velocity.length)
-    if speed > float(max_speed):
-        body.velocity *= float(max_speed) / speed
-
-
-def integrate_load_velocity_with_ground_resistance(
-    body: pymunk.Body,
-    gravity: tuple[float, float],
-    damping: float,
-    dt: float,
-    *,
-    linear_deceleration: float,
-    angular_deceleration: float,
-) -> None:
-    del damping
-    pymunk.Body.update_velocity(body, gravity, 1.0, float(dt))
-    speed = float(body.velocity.length)
-    linear_drop = float(linear_deceleration) * float(dt)
-    if speed <= linear_drop:
-        body.velocity = (0.0, 0.0)
-    elif speed > 0.0:
-        body.velocity *= (speed - linear_drop) / speed
-    angular_velocity = float(body.angular_velocity)
-    angular_drop = float(angular_deceleration) * float(dt)
-    if abs(angular_velocity) <= angular_drop:
-        body.angular_velocity = 0.0
-    else:
-        body.angular_velocity = math.copysign(
-            abs(angular_velocity) - angular_drop,
-            angular_velocity,
-        )
-
-
-def remove_inward_contact_velocity(
-    body: pymunk.Body,
-    *,
-    outward_normal: tuple[float, float],
-    contact_point: tuple[float, float],
-) -> None:
-    normal = pymunk.Vec2d(float(outward_normal[0]), float(outward_normal[1]))
-    normal_length = float(normal.length)
-    if normal_length <= 1e-12:
-        return
-    normal /= normal_length
-    radius = pymunk.Vec2d(float(contact_point[0]), float(contact_point[1])) - body.position
-    contact_velocity = body.velocity + pymunk.Vec2d(
-        -float(body.angular_velocity) * float(radius.y),
-        float(body.angular_velocity) * float(radius.x),
+    projection_mode = is_pusher_block_projection_mode(env)
+    block_pose = _current_block_pose(env) if projection_mode else None
+    block_polygons = (
+        transform_t_block_polygons(block_pose) if block_pose is not None else ()
     )
-    inward_speed = float(contact_velocity.dot(normal))
-    if inward_speed >= 0.0:
-        return
-    inverse_mass = 1.0 / float(body.mass)
-    radius_cross_normal = float(radius.cross(normal))
-    inverse_moment = 0.0 if math.isinf(float(body.moment)) else 1.0 / float(body.moment)
-    effective_inverse_mass = inverse_mass + radius_cross_normal**2 * inverse_moment
-    if effective_inverse_mass <= 0.0:
-        return
-    impulse_magnitude = -inward_speed / effective_inverse_mass
-    body.velocity += normal * (impulse_magnitude * inverse_mass)
-    body.angular_velocity += radius_cross_normal * impulse_magnitude * inverse_moment
+    pre_step_wall_near: bool | None = None
 
-
-def deepest_block_wall_penetration(
-    block_shapes: Iterable[pymunk.Shape],
-    wall_shapes: Iterable[pymunk.Shape],
-) -> BlockWallPenetration | None:
-    best: BlockWallPenetration | None = None
-    for block_shape in block_shapes:
-        for wall_shape in wall_shapes:
-            if not block_shape.bb.intersects(wall_shape.bb):
-                continue
-            contacts = block_shape.shapes_collide(wall_shape)
-            candidate = _block_wall_penetration_from_contacts(contacts)
-            if candidate is not None and (
-                best is None or candidate.depth > best.depth
-            ):
-                best = candidate
-    return best
-
-
-def _block_wall_penetration_from_contacts(
-    contacts: pymunk.ContactPointSet,
-) -> BlockWallPenetration | None:
-    if not contacts.points:
-        return None
-    point = min(contacts.points, key=lambda candidate: float(candidate.distance))
-    depth = max(0.0, -float(point.distance))
-    normal = pymunk.Vec2d(-float(contacts.normal.x), -float(contacts.normal.y))
-    if depth <= 0.0 or float(normal.length) <= 1e-12:
-        return None
-    return BlockWallPenetration(
-        depth=float(depth),
-        outward_normal=(float(normal.x), float(normal.y)),
-        contact_point=(float(point.point_a.x), float(point.point_a.y)),
-    )
-
-
-def _deepest_block_wall_penetration_space_query(
-    space: pymunk.Space,
-    block_shapes: tuple[pymunk.Shape, ...],
-    wall_shape_order: Mapping[pymunk.Shape, int],
-) -> BlockWallPenetration | None:
-    """Match the exact pairwise result while using Chipmunk's broadphase."""
-
-    best: BlockWallPenetration | None = None
-    for block_shape in block_shapes:
-        contacts = sorted(
-            (
-                contact
-                for contact in space.shape_query(block_shape)
-                if contact.shape in wall_shape_order
-            ),
-            key=lambda contact: wall_shape_order[contact.shape],
-        )
-        for contact in contacts:
-            candidate = _block_wall_penetration_from_contacts(
-                contact.contact_point_set
+    def pre_step_projection_enabled(pusher_position: tuple[float, float]) -> bool:
+        nonlocal pre_step_wall_near
+        if not projection_mode:
+            return False
+        if not _is_pusher_near_t_block_polygons(
+            env,
+            pusher_position=pusher_position,
+            block_polygons=block_polygons,
+        ):
+            return False
+        if pre_step_wall_near is None:
+            pre_step_wall_near = _are_block_polygons_near_narrow_door_wall(
+                env,
+                block_polygons=block_polygons,
             )
-            if candidate is not None and (
-                best is None or candidate.depth > best.depth
-            ):
-                best = candidate
+        return bool(pre_step_wall_near)
+
+    projection_enabled = bool(
+        pre_step_projection_enabled(
+            (float(env.agent.position.x), float(env.agent.position.y))
+        )
+    )
+    if projection_enabled:
+        _project_current_pusher_out_of_block(env, block_pose=block_pose)
+    position = env.agent.position
+    velocity = env.agent.velocity
+    velocity_x = float(velocity.x) + (
+        float(k_p) * (float(target_x) - float(position.x)) - float(k_v) * float(velocity.x)
+    ) * float(dt)
+    velocity_y = float(velocity.y) + (
+        float(k_p) * (float(target_y) - float(position.y)) - float(k_v) * float(velocity.y)
+    ) * float(dt)
+    if is_hardened_workspace_boundary_mode(env):
+        velocity_x, velocity_y = _clip_pusher_velocity_to_workspace(
+            env,
+            velocity_x=velocity_x,
+            velocity_y=velocity_y,
+            dt=float(dt),
+        )
+    proposed_position = (
+        float(position.x) + float(velocity_x) * float(dt),
+        float(position.y) + float(velocity_y) * float(dt),
+    )
+    if pre_step_projection_enabled(proposed_position):
+        velocity_x, velocity_y = _project_agent_velocity_against_block(
+            env,
+            velocity_x=velocity_x,
+            velocity_y=velocity_y,
+            dt=float(dt),
+            block_pose=block_pose,
+        )
+        if is_hardened_workspace_boundary_mode(env):
+            velocity_x, velocity_y = _clip_pusher_velocity_to_workspace(
+                env,
+                velocity_x=velocity_x,
+                velocity_y=velocity_y,
+                dt=float(dt),
+            )
+    env.agent.velocity = (velocity_x, velocity_y)
+    env.space.step(float(dt))
+    if is_hardened_workspace_boundary_mode(env):
+        _clamp_current_pusher_to_workspace(env)
+        _project_current_block_out_of_workspace_and_static_walls(env)
+    if projection_mode:
+        post_block_pose = _current_block_pose(env)
+        post_block_polygons = transform_t_block_polygons(post_block_pose)
+        if _is_projection_enabled_for_block_polygons(
+            env,
+            pusher_position=(float(env.agent.position.x), float(env.agent.position.y)),
+            block_polygons=post_block_polygons,
+        ):
+            _project_current_pusher_out_of_block(env, block_pose=post_block_pose)
+
+
+def _project_current_block_out_of_workspace_and_static_walls(
+    env: NarrowDoorPushTEnv,
+) -> None:
+    for _ in range(BLOCK_WALL_PROJECTION_MAX_ITERATIONS):
+        pose = _current_block_pose(env)
+        correction = _t_block_workspace_correction(env, pose=pose)
+        if correction is None:
+            correction = _t_block_static_wall_correction(env, pose=pose)
+        if correction is None:
+            return
+        _apply_block_translation_correction(env, correction)
+
+
+def _t_block_workspace_correction(
+    env: NarrowDoorPushTEnv,
+    *,
+    pose: Pose2D,
+) -> tuple[float, float, float] | None:
+    points = [
+        point
+        for polygon in transform_t_block_polygons(pose)
+        for point in polygon
+    ]
+    xs = [float(point[0]) for point in points]
+    ys = [float(point[1]) for point in points]
+    boundary_min = float(env.narrow_door_layout.boundary_min)
+    boundary_max = float(env.narrow_door_layout.boundary_max)
+
+    correction_x = 0.0
+    correction_y = 0.0
+    if min(xs) < boundary_min:
+        correction_x = boundary_min - min(xs) + BLOCK_WALL_PROJECTION_PADDING
+    elif max(xs) > boundary_max:
+        correction_x = boundary_max - max(xs) - BLOCK_WALL_PROJECTION_PADDING
+    if min(ys) < boundary_min:
+        correction_y = boundary_min - min(ys) + BLOCK_WALL_PROJECTION_PADDING
+    elif max(ys) > boundary_max:
+        correction_y = boundary_max - max(ys) - BLOCK_WALL_PROJECTION_PADDING
+
+    depth = max(abs(correction_x), abs(correction_y))
+    if depth <= BLOCK_WALL_PROJECTION_EPS:
+        return None
+    return (correction_x, correction_y, depth)
+
+
+def _t_block_static_wall_correction(
+    env: NarrowDoorPushTEnv,
+    *,
+    pose: Pose2D,
+) -> tuple[float, float, float] | None:
+    if getattr(env, "cache_static_wall_projection", False):
+        return _cached_t_block_static_wall_correction(env, pose=pose)
+    obstacle_polygons = tuple(
+        _poly_shape_world_vertices(shape)
+        for shape in env.narrow_door_wall_shapes
+        if isinstance(shape, pymunk.Poly)
+    )
+    if not obstacle_polygons:
+        return None
+
+    best: tuple[float, float, float] | None = None
+    for block_polygon in transform_t_block_polygons(pose):
+        for obstacle_polygon in obstacle_polygons:
+            correction = _convex_polygon_separation_correction(
+                moving_polygon=block_polygon,
+                obstacle_polygon=obstacle_polygon,
+            )
+            if correction is None:
+                continue
+            if best is None or abs(correction[2]) < abs(best[2]):
+                best = correction
     return best
 
 
-def enforce_block_wall_nonpenetration(
-    space: pymunk.Space,
-    block_body: pymunk.Body,
-    block_shapes: Iterable[pymunk.Shape],
-    wall_shapes: Iterable[pymunk.Shape],
+def _cached_t_block_static_wall_correction(env, *, pose):
+    """Exact SAT with static geometry reuse and conservative AABB rejection.
+
+    Opt-in for immutable scene geometry. _setup invalidates the cache; callers
+    editing existing wall vertices/transforms must invalidate it explicitly.
+    Narrow Door production scenes keep these shapes static until next reset.
+    """
+    cached = env._static_wall_projection_cache
+    if cached is None or cached[0] is not env.narrow_door_wall_shapes:
+        obstacles = []
+        for shape in env.narrow_door_wall_shapes:
+            if isinstance(shape, pymunk.Poly):
+                polygon = _poly_shape_world_vertices(shape)
+                obstacles.append((polygon, _polygon_unit_axes(polygon), _polygon_bounds(polygon)))
+        cached = (env.narrow_door_wall_shapes, obstacles)
+        env._static_wall_projection_cache = cached
+    best = None
+    for polygon in transform_t_block_polygons(pose):
+        axes = None
+        xmin, xmax, ymin, ymax = _polygon_bounds(polygon)
+        for obstacle, obstacle_axes, (oxmin, oxmax, oymin, oymax) in cached[1]:
+            # Leave contact/near-contact to the identical narrow-phase math.
+            if (xmax < oxmin - 1e-6 or oxmax < xmin - 1e-6
+                    or ymax < oymin - 1e-6 or oymax < ymin - 1e-6):
+                continue
+            if axes is None:
+                axes = _polygon_unit_axes(polygon)
+            correction = _convex_polygon_separation_correction(
+                moving_polygon=polygon, obstacle_polygon=obstacle,
+                axes=axes + obstacle_axes)
+            if correction is not None and (best is None or abs(correction[2]) < abs(best[2])):
+                best = correction
+    return best
+
+
+def _polygon_bounds(polygon):
+    xs = [float(p[0]) for p in polygon]
+    ys = [float(p[1]) for p in polygon]
+    return min(xs), max(xs), min(ys), max(ys)
+
+
+def _apply_block_translation_correction(
+    env: NarrowDoorPushTEnv,
+    correction: tuple[float, float, float],
+) -> None:
+    correction_x, correction_y, depth = correction
+    if float(depth) <= BLOCK_WALL_PROJECTION_EPS:
+        return
+
+    old_position = env.block.position
+    env.block.position = (
+        float(old_position.x) + float(correction_x),
+        float(old_position.y) + float(correction_y),
+    )
+    env.narrow_door_block_wall_projection_count += 1
+    env.narrow_door_block_wall_projection_max_depth = max(
+        float(env.narrow_door_block_wall_projection_max_depth),
+        float(depth),
+    )
+
+    correction_norm = float(np.hypot(float(correction_x), float(correction_y)))
+    if correction_norm <= BLOCK_WALL_PROJECTION_EPS:
+        return
+    normal_x = float(correction_x) / correction_norm
+    normal_y = float(correction_y) / correction_norm
+    velocity = env.block.velocity
+    inward_velocity = float(velocity.x) * normal_x + float(velocity.y) * normal_y
+    if inward_velocity < 0.0:
+        env.block.velocity = (
+            float(velocity.x) - inward_velocity * normal_x,
+            float(velocity.y) - inward_velocity * normal_y,
+        )
+    env.block.angular_velocity = 0.0
+
+
+def _poly_shape_world_vertices(
+    shape: pymunk.Poly,
+) -> tuple[tuple[float, float], ...]:
+    return tuple(
+        (
+            float(point.x),
+            float(point.y),
+        )
+        for point in (shape.body.local_to_world(vertex) for vertex in shape.get_vertices())
+    )
+
+
+def _convex_polygon_separation_correction(
     *,
-    slop: float,
-    padding: float,
-    max_iterations: int,
-) -> NonpenetrationResult:
-    block_shape_tuple = tuple(block_shapes)
-    wall_shape_tuple = tuple(wall_shapes)
-    wall_shape_order = {
-        wall_shape: index for index, wall_shape in enumerate(wall_shape_tuple)
-    }
-    correction_count = 0
-    max_depth = 0.0
-    for _ in range(int(max_iterations)):
-        penetration = _deepest_block_wall_penetration_space_query(
-            space,
-            block_shape_tuple,
-            wall_shape_order,
-        )
-        if penetration is None or penetration.depth <= float(slop):
-            break
-        max_depth = max(max_depth, penetration.depth)
-        remove_inward_contact_velocity(
-            block_body,
-            outward_normal=penetration.outward_normal,
-            contact_point=penetration.contact_point,
-        )
-        block_body.position += pymunk.Vec2d(*penetration.outward_normal) * (
-            penetration.depth + float(padding)
-        )
-        space.reindex_shapes_for_body(block_body)
-        correction_count += 1
-    return NonpenetrationResult(correction_count, max_depth)
+    moving_polygon: tuple[tuple[float, float], ...],
+    obstacle_polygon: tuple[tuple[float, float], ...],
+    axes: list[tuple[float, float]] | None = None,
+) -> tuple[float, float, float] | None:
+    best_vector: tuple[float, float] | None = None
+    best_distance = np.inf
+    if axes is None:
+        axes = _polygon_unit_axes(moving_polygon) + _polygon_unit_axes(obstacle_polygon)
+    for axis in axes:
+        moving_min, moving_max = _project_polygon_onto_axis(moving_polygon, axis)
+        obstacle_min, obstacle_max = _project_polygon_onto_axis(obstacle_polygon, axis)
+        if (
+            float(moving_max) <= float(obstacle_min) + BLOCK_WALL_PROJECTION_EPS
+            or float(obstacle_max) <= float(moving_min) + BLOCK_WALL_PROJECTION_EPS
+        ):
+            return None
+        move_negative = float(moving_max) - float(obstacle_min)
+        move_positive = float(obstacle_max) - float(moving_min)
+        if move_negative < move_positive:
+            signed_distance = -move_negative
+        else:
+            signed_distance = move_positive
+        distance = abs(signed_distance)
+        if distance < float(best_distance):
+            best_vector = (
+                float(axis[0]) * signed_distance,
+                float(axis[1]) * signed_distance,
+            )
+            best_distance = float(distance)
+    if best_vector is None or not np.isfinite(best_distance):
+        return None
+    vector_norm = float(np.hypot(best_vector[0], best_vector[1]))
+    if vector_norm <= BLOCK_WALL_PROJECTION_EPS:
+        return None
+    padded_norm = vector_norm + BLOCK_WALL_PROJECTION_PADDING
+    scale = padded_norm / vector_norm
+    return (best_vector[0] * scale, best_vector[1] * scale, padded_norm)
 
 
-__all__ = [
-    "BlockWallPenetration",
-    "NarrowDoorV6PhysicsConfig",
-    "NonpenetrationResult",
-    "apply_force_limited_pd",
-    "deepest_block_wall_penetration",
-    "enforce_block_wall_nonpenetration",
-    "integrate_load_velocity_with_ground_resistance",
-    "integrate_pusher_velocity",
-    "narrowdoor_v60_physics_config",
-    "narrowdoor_v61_physics_config",
-    "remove_inward_contact_velocity",
-]
+def _polygon_unit_axes(
+    polygon: tuple[tuple[float, float], ...],
+) -> list[tuple[float, float]]:
+    axes: list[tuple[float, float]] = []
+    for index, point in enumerate(polygon):
+        next_point = polygon[(index + 1) % len(polygon)]
+        edge_x = float(next_point[0]) - float(point[0])
+        edge_y = float(next_point[1]) - float(point[1])
+        norm = float(np.hypot(edge_x, edge_y))
+        if norm <= BLOCK_WALL_PROJECTION_EPS:
+            continue
+        axes.append((-edge_y / norm, edge_x / norm))
+    return axes
+
+
+def _project_polygon_onto_axis(
+    polygon: tuple[tuple[float, float], ...],
+    axis: tuple[float, float],
+) -> tuple[float, float]:
+    values = [
+        float(point[0]) * float(axis[0]) + float(point[1]) * float(axis[1])
+        for point in polygon
+    ]
+    return min(values), max(values)
+
+
+def _current_block_pose(env: NarrowDoorPushTEnv) -> Pose2D:
+    return Pose2D(
+        x=float(env.block.position.x),
+        y=float(env.block.position.y),
+        theta=float(env.block.angle),
+    )
+
+
+def transform_t_block_polygons(pose: Pose2D) -> tuple[tuple[tuple[float, float], ...], ...]:
+    cos_t = math.cos(pose.theta)
+    sin_t = math.sin(pose.theta)
+    transformed: list[tuple[tuple[float, float], ...]] = []
+    for polygon in OFFICIAL_T_BLOCK_POLYGONS:
+        transformed.append(
+            tuple(
+                (
+                    pose.x + cos_t * x - sin_t * y,
+                    pose.y + sin_t * x + cos_t * y,
+                )
+                for x, y in polygon
+            )
+        )
+    return tuple(transformed)

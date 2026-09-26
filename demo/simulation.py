@@ -1,8 +1,8 @@
-"""Browser teleoperation adapter: paper layouts and force-limited contact physics."""
+"""Browser teleoperation using retained V6.0 physics (800 Hz / 10 Hz control)."""
 import json, math
-from functools import partial
+from types import SimpleNamespace
 import pymunk
-from physics import apply_force_limited_pd, integrate_pusher_velocity, integrate_load_velocity_with_ground_resistance, enforce_block_wall_nonpenetration
+from physics import step_agent_pd_substep, OFFICIAL_T_BLOCK_POLYGONS
 
 POLYS = [[(-60,0),(60,0),(60,30),(-60,30)], [(-15,30),(15,30),(15,120),(-15,120)]]
 
@@ -29,32 +29,44 @@ def polygons(pose):
 
 class Simulation:
     def __init__(self, task):
-        self.task=task;self.space=pymunk.Space();self.space.gravity=(0,0);self.space.damping=1
+        self.task=task
+        self.narrow_door_layout=SimpleNamespace(boundary_min=task['bounds'][0],boundary_max=task['bounds'][1])
+        self.narrow_door_block_wall_projection_count=0
+        self.narrow_door_block_wall_projection_max_depth=0.
+        self.space=pymunk.Space();self.space.gravity=(0,0);self.space.damping=0.
         self.space.iterations=120;self.space.collision_slop=.0001;self.space.collision_bias=1e-8;self.space.collision_persistence=1
-        self.walls=[]
         lo,hi=task['bounds'];mid=(lo+hi)/2;span=hi-lo+96
-        for x,y,w,h in task['walls']+[[lo-24,mid,48,span],[hi+24,mid,48,span],[mid,lo-24,span,48],[mid,hi+24,span,48]]:
+        def wall(rect):
+            x,y,w,h=rect
             body=pymunk.Body(body_type=pymunk.Body.STATIC);body.position=x,y
-            shape=pymunk.Poly.create_box(body,(w,h));shape.friction=1;shape.filter=pymunk.ShapeFilter(categories=4,mask=2)
-            self.space.add(body,shape);self.walls.append(shape)
-        self.block=pymunk.Body(1,2*pymunk.moment_for_poly(1,POLYS[0]));self.parts=[pymunk.Poly(self.block,p) for p in POLYS]
+            shape=pymunk.Poly.create_box(body,(w,h));shape.friction=1.;shape.elasticity=0.
+            self.space.add(body,shape)
+            return shape
+        self.narrow_door_boundary_shapes=tuple(wall(r) for r in [[lo-24,mid,48,span],[hi+24,mid,48,span],[mid,lo-24,span,48],[mid,hi+24,span,48]])
+        self.agent=pymunk.Body(body_type=pymunk.Body.KINEMATIC)
+        self.agent.position=(task['size']/2,task['size']/2)
+        p=pymunk.Circle(self.agent,15);self.space.add(self.agent,p)
+        verts=OFFICIAL_T_BLOCK_POLYGONS
+        self.block=pymunk.Body(1,2*pymunk.moment_for_poly(1,verts[0]))
+        self.parts=[pymunk.Poly(self.block,p) for p in verts]
         self.block.center_of_gravity=(self.parts[0].center_of_gravity+self.parts[1].center_of_gravity)/2
-        self.block.angle=task['start'][4];self.block.position=task['start'][2:4]
-        self.block.velocity_func=partial(integrate_load_velocity_with_ground_resistance,linear_deceleration=1000.,angular_deceleration=16.)
-        for p in self.parts:p.friction=1;p.filter=pymunk.ShapeFilter(categories=2,mask=1|4)
+        self.block.position=(task['size']/2,task['size']/2)
         self.space.add(self.block,*self.parts)
-        self.agent=pymunk.Body(1,pymunk.moment_for_circle(1,0,15));self.agent.position=task['start'][:2]
-        self.agent.velocity_func=partial(integrate_pusher_velocity,max_speed=450.)
-        p=pymunk.Circle(self.agent,15);p.friction=0;p.filter=pymunk.ShapeFilter(categories=1,mask=2)
-        self.space.add(self.agent,p);self.target=list(self.agent.position);self.elapsed=0
+        self.narrow_door_wall_shapes=tuple(wall(r) for r in task['walls'])
+        # Preserve setup order, default shape friction/filters, and reset stabilization.
+        self.agent.position=task['start'][:2];self.agent.velocity=(0,0)
+        self.block.angle=task['start'][4];self.block.position=task['start'][2:4]
+        self.block.velocity=(0,0);self.block.angular_velocity=0
+        self.space.step(.00125)
+        self.target=list(self.agent.position);self.elapsed=0
         self.goals=polygons(task['goal'])
-    def step(self,target,steps=16):
-        lo,hi=self.task['bounds'];self.target=[max(lo+15,min(hi-15,float(v))) for v in target]
+    def step(self,target,steps=80):
+        lo,hi=self.task['bounds']
+        if len(target)!=2 or any(not math.isfinite(float(v)) or v<lo+15 or v>hi-15 for v in target):
+            raise ValueError('Target outside executable workspace')
+        self.target=list(target)
         for _ in range(steps):
-            apply_force_limited_pd(self.agent,target=tuple(self.target),k_p=60.,k_v=15.,max_force=2500.)
-            self.space.step(.00125)
-            x,y=self.agent.position;self.agent.position=(max(lo+15,min(hi-15,x)),max(lo+15,min(hi-15,y)))
-            enforce_block_wall_nonpenetration(self.space,self.block,self.parts,self.walls,slop=.1,padding=.001,max_iterations=12)
+            step_agent_pd_substep(self,target_x=target[0],target_y=target[1],k_p=100.,k_v=20.,dt=.00125)
         self.elapsed+=steps*.00125
         return self.state()
     def state(self):

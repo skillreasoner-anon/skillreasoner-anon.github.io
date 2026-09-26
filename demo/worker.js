@@ -3,10 +3,10 @@ importScripts('../vendor/pyodide/pyodide.js');
 let py, ready=false;
 const loaded=(async()=>{
   py=await loadPyodide({indexURL:new URL('../vendor/pyodide/',self.location.href).href});
-  await py.loadPackage('cffi');
+  await py.loadPackage(['cffi','numpy']);
   const wheel=await (await fetch('../vendor/pyodide/pymunk.whl')).arrayBuffer();
   py.unpackArchive(new Uint8Array(wheel),'zip',{extractDir:'/lib/python3.12/site-packages'});
-  for (const name of ['physics.py','simulation.py']) py.FS.writeFile('/home/pyodide/'+name,await (await fetch(name)).text());
+  for (const name of ['physics.py','simulation.py']) py.FS.writeFile('/home/pyodide/'+name,await (await fetch(name+'?v=v60-1')).text());
   await py.runPythonAsync('from simulation import reset_task, advance');
   ready=true;postMessage({type:'ready'});
 })().catch(()=>postMessage({type:'error',message:'The simulator could not load. Please reload or try a current browser.'}));
