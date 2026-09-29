@@ -3,10 +3,10 @@
   'use strict';
   const el = id => document.getElementById(id);
   const stageCopy = [
-    'Encode the latest observation–action history into a latent state. The goal specifies the desired object arrangement.',
-    'Sample candidate latent skills from the state-conditioned proposal. Each skill represents a behavior with a learned temporal horizon.',
-    'Roll candidate skills forward with learned latent dynamics. Beam search scores imagined sequences using goal geometry, rollout risk, and learned cost-to-go.',
-    'Decode and execute the first selected skill as low-level actions. Encode the new observations and search again; the imagined remainder is not executed blindly.'
+    'The state encoder encodes the latest observation–action history into a latent state. The goal supplies target object keypoints and encoded goal observations.',
+    'Sample candidate skills from the proposal function P, conditioned on the current latent state.',
+    'Beam search rolls skills forward with dynamics F. Each imagined trajectory is scored by goal evaluation at its endpoint, a risk proxy along its rollout, and a learned cost-to-go.',
+    'The skill decoder translates the first selected skill into low-level actions. SkillReasoner then replans using new observations.'
   ];
   let stage = 0, explanationTimer = null;
   function setStage(value) {
@@ -28,10 +28,50 @@
     explanationTimer = setInterval(() => setStage((stage + 1) % 4), 2600);
   });
 
+  const learningCopy = [
+    'The state encoder E encodes a 3-step observation–action history into latent state z. State grounding G predicts goal features (keypoints) and coordinatewise variance, which weights feature errors during training.',
+    'Sample interaction windows with duration d uniformly from 1 to H. Skill encoder Q compresses each window into a fixed-length sequence of discrete tokens u. Decoder D, conditioned on the current state z, reconstructs the actions and predicts the duration. Like G, D predicts coordinatewise variance without uncertainty labels.',
+    'Freeze the representation modules E, Q, D, and G. Proposal, dynamics, and value are learned on the resulting latent states and skills; they do not ingest raw high-dimensional data.',
+    'Proposal P learns to sample Q-encoded skills from state z. Dynamics F predicts their encoded endpoints. Value V learns negative, duration-aware goal-reaching cost from hindsight goals.'
+  ];
+  let learningStage = 0, learningTimer = null;
+  function setLearningStage(value) {
+    learningStage = value;
+    el('learning-diagram').dataset.learningStage = String(value);
+    el('learning-copy').textContent = learningCopy[value];
+    document.querySelectorAll('button[data-learning-stage]').forEach(button => button.setAttribute('aria-pressed', String(Number(button.dataset.learningStage) === value)));
+  }
+  function stopLearning() {
+    clearInterval(learningTimer); learningTimer = null;
+    el('learning-play').textContent = 'Play explanation';
+    el('learning-play').setAttribute('aria-pressed', 'false');
+  }
+  document.querySelectorAll('button[data-learning-stage]').forEach(button => button.addEventListener('click', () => {
+    stopLearning(); setLearningStage(Number(button.dataset.learningStage));
+  }));
+  el('learning-play').addEventListener('click', () => {
+    if (learningTimer) { stopLearning(); return; }
+    el('learning-play').textContent = 'Pause explanation';
+    el('learning-play').setAttribute('aria-pressed', 'true');
+    learningTimer = setInterval(() => setLearningStage((learningStage + 1) % 4), 7000);
+  });
+  async function loadLearningDiagram() {
+    try {
+      const response = await fetch('learning.svg');
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const doc = new DOMParser().parseFromString(await response.text(), 'image/svg+xml');
+      if (doc.querySelector('parsererror')) throw new Error('Invalid learning diagram');
+      el('learning-visual').replaceChildren(document.importNode(doc.documentElement, true));
+      document.querySelectorAll('button[data-learning-stage], #learning-play').forEach(button => button.disabled = false);
+    } catch (error) {
+      el('learning-visual').textContent = 'The learning illustration could not load. Please reload the page.';
+    }
+  }
+
   const descriptions = {
-    narrow_door: ['Narrow Passage', 'Rotate and transport the block through a tight opening, then align with the target.'],
-    multi_room: ['Multi-Room', 'Change contact and navigate between rooms before refining the final pose.'],
-    three_door: ['Winding Maze', 'Compose a longer sequence of interactions through three alternating passages.']
+    narrow_door: ['Narrow Passage', 'Extended free-space motion with fine adjustments near the passage and final goal.'],
+    multi_room: ['Multi-Room', 'Two possible object pathways to the same goal.'],
+    three_door: ['Winding Maze', 'Long-horizon rollouts through successive passages.']
   };
   const blockShape = [[-60,0],[60,0],[60,30],[15,30],[15,120],[-15,120],[-15,30],[-60,30]];
   let recordings = null, recording = null, selected = 'narrow_door', frame = 0, position = 0, playing = false, lastTimestamp = null;
@@ -118,15 +158,16 @@
     }
   });
   demoStateObserver.observe(el('task'), { attributes:true, attributeFilter:['disabled'] });
-  document.addEventListener('visibilitychange', () => { if (document.hidden) { stopExplanation(); stopRollout(); } });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { stopLearning(); stopExplanation(); stopRollout(); } });
   if ('IntersectionObserver' in window) {
     const observer = new IntersectionObserver(entries => entries.forEach(entry => {
       if (entry.isIntersecting) return;
+      if (entry.target.id === 'learning') stopLearning();
       if (entry.target.id === 'method') stopExplanation();
       if (entry.target.id === 'rollouts') stopRollout();
       if (entry.target.id === 'try-it' && demoLoaded && !el('pause').disabled && el('pause').textContent === 'Pause') el('pause').click();
     }), {threshold:0});
-    ['method','rollouts','try-it'].forEach(id => observer.observe(el(id)));
+    ['learning','method','rollouts','try-it'].forEach(id => observer.observe(el(id)));
     const videos = new IntersectionObserver(entries => entries.forEach(entry => { if (!entry.isIntersecting) entry.target.pause(); }));
     document.querySelectorAll('video').forEach(video => videos.observe(video));
   }
@@ -141,8 +182,9 @@
       scene(el('world').getContext('2d'),el('world'),recordings.narrow_door,recordings.narrow_door.states[0]);
     } catch (error) {
       el('rollout-error').hidden = false;
-      el('rollout-error').textContent = 'Recorded playback could not load. Please reload the page. The figures and physics demo remain available.';
+      el('rollout-error').textContent = 'Recorded playback could not load. Please reload the page. The physics demo remains available.';
     }
   }
   loadRecordings();
+  loadLearningDiagram();
 })();
