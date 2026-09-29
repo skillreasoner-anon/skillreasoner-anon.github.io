@@ -29,9 +29,9 @@
   });
 
   const learningCopy = [
-    'The state encoder E encodes a 3-step observation–action history into latent state z. State grounding G predicts goal features (keypoints) and coordinatewise variance, which weights feature errors during training.',
-    'Sample interaction windows with duration d uniformly from 1 to H. Skill encoder Q compresses each window into a fixed-length sequence of discrete tokens u. Decoder D, conditioned on the current state z, reconstructs the actions and predicts the duration. Like G, D predicts coordinatewise variance without uncertainty labels.',
-    'Freeze the representation modules E, Q, D, and G. Proposal, dynamics, and value are learned on the resulting latent states and skills; they do not ingest raw high-dimensional data.',
+    'State encoder E encodes a 3-step observation–action history into latent state z. State grounding G predicts goal features (keypoints); coordinatewise variance weights feature errors during training.',
+    'Sample interaction windows of varying duration. Skill encoder Q compresses each window into discrete tokens u. Decoder D reconstructs its actions and predicts the duration, conditioned on state z.',
+    'Freeze E, Q, D, and G, then learn the proposal, dynamics, and value on the resulting latent states and skills.',
     'Proposal P learns to sample Q-encoded skills from state z. Dynamics F predicts their encoded endpoints. Value V learns negative, duration-aware goal-reaching cost from hindsight goals.'
   ];
   let learningStage = 0, learningTimer = null;
@@ -62,6 +62,7 @@
       const doc = new DOMParser().parseFromString(await response.text(), 'image/svg+xml');
       if (doc.querySelector('parsererror')) throw new Error('Invalid learning diagram');
       el('learning-visual').replaceChildren(document.importNode(doc.documentElement, true));
+      setLearningStage(0);
       document.querySelectorAll('button[data-learning-stage], #learning-play').forEach(button => button.disabled = false);
     } catch (error) {
       el('learning-visual').textContent = 'The learning illustration could not load. Please reload the page.';
@@ -74,7 +75,7 @@
     three_door: ['Winding Maze', 'Long-horizon rollouts through successive passages.']
   };
   const blockShape = [[-60,0],[60,0],[60,30],[15,30],[15,120],[-15,120],[-15,30],[-60,30]];
-  let recordings = null, recording = null, selected = 'narrow_door', frame = 0, position = 0, playing = false, lastTimestamp = null;
+  let recordings = null, recording = null, selected = 'multi_room', outcome = 'success', frame = 0, position = 0, playing = false, lastTimestamp = null;
   const canvas = el('rollout-world'), ctx = canvas.getContext('2d');
   const timeline = el('skill-timeline'), timelineCtx = timeline.getContext('2d');
   function polygon(context, pose, fill, stroke, dashed = false) {
@@ -113,19 +114,22 @@
     playing = false; lastTimestamp = null;
     el('rollout-play').textContent = 'Play rollout'; el('rollout-play').setAttribute('aria-pressed','false');
   }
-  function selectRecording(key) {
+  function selectRecording(key, nextOutcome = outcome) {
     if (!recordings) return;
-    stopRollout(); selected = key; recording = recordings[key]; frame = 0; position = 0;
+    stopRollout(); selected = key; outcome = nextOutcome; recording = recordings[key][outcome]; frame = 0; position = 0;
     el('rollout-title').textContent = descriptions[key][0]; el('rollout-description').textContent = descriptions[key][1];
     el('rollout-depth').textContent = `${recording.depth} skills`;
-    el('rollout-identity').textContent = `Episode ${recording.episode_id} · ${recording.cycle_starts.length} executed skills · ${(recording.final_overlap*100).toFixed(1)}% terminal overlap. Selected successful example.`;
+    el('rollout-identity').textContent = `${(recording.final_overlap*100).toFixed(1)}% final object–goal overlap`;
     el('rollout-scrub').max = String(recording.control_steps);
+    el('rollout-outcome').textContent = recording.success ? 'Successful execution' : 'Failed execution';
+    document.querySelectorAll('[data-outcome]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.outcome === outcome)));
+    canvas.setAttribute('aria-label', `${descriptions[key][0]}: ${outcome}, recorded evaluation episode`);
     document.querySelectorAll('[data-rollout]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.rollout === key)));
     render();
   }
   function tick(timestamp) {
     if (!playing) return;
-    if (lastTimestamp !== null) position += Math.min(timestamp-lastTimestamp,250)/1000*recording.control_hz*Number(el('rollout-speed').value);
+    if (lastTimestamp !== null) position += Math.min(timestamp-lastTimestamp,250)/1000*recording.control_hz;
     lastTimestamp = timestamp;
     const next = Math.min(recording.control_steps, Math.floor(position));
     if (next !== frame) { frame = next; render(); }
@@ -142,6 +146,7 @@
   el('rollout-restart').addEventListener('click', () => selectRecording(selected));
   el('rollout-scrub').addEventListener('input', event => { if (!recording) return; stopRollout(); frame = Number(event.target.value); position = frame; render(); });
   document.querySelectorAll('[data-rollout]').forEach(button => button.addEventListener('click', () => selectRecording(button.dataset.rollout)));
+  document.querySelectorAll('[data-outcome]').forEach(button => button.addEventListener('click', () => selectRecording(selected, button.dataset.outcome)));
   let demoLoaded = false;
   el('load-demo').addEventListener('click', () => {
     if (demoLoaded) return;
@@ -179,7 +184,7 @@
       selectRecording(selected);
       ['rollout-play','rollout-restart','rollout-scrub'].forEach(id => el(id).disabled = false);
       // Preview the interactive task without downloading its 27 MB runtime.
-      scene(el('world').getContext('2d'),el('world'),recordings.narrow_door,recordings.narrow_door.states[0]);
+      scene(el('world').getContext('2d'),el('world'),recordings.narrow_door.success,recordings.narrow_door.success.states[0]);
     } catch (error) {
       el('rollout-error').hidden = false;
       el('rollout-error').textContent = 'Recorded playback could not load. Please reload the page. The physics demo remains available.';
