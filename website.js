@@ -372,6 +372,11 @@
     });
     el('rollout-error').hidden = true;
   }
+  const scoreExplainer = el('score-help').closest('.score-explainer');
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && (scoreExplainer.matches(':hover') || scoreExplainer.contains(document.activeElement))) scoreExplainer.classList.add('tooltip-dismissed');
+  });
+  ['mouseleave','focusout'].forEach(type => scoreExplainer.addEventListener(type, () => scoreExplainer.classList.remove('tooltip-dismissed')));
   let demoLoaded = false;
   el('load-demo').addEventListener('click', () => {
     if (demoLoaded) return;

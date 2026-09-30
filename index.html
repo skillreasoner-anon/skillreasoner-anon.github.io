@@ -81,21 +81,26 @@
         </div>
         <div id="execution-controls"><div class="playback"><button id="rollout-play" disabled aria-pressed="false">Play Rollout</button><button id="rollout-restart" disabled>Restart</button><span class="playback-speed">1× Speed</span><output id="rollout-time">0.0 s</output></div>
           <label class="scrub-label" for="rollout-scrub">Recorded Execution <output id="rollout-step">—</output></label><input id="rollout-scrub" type="range" min="0" max="206" value="0" disabled>
-          <div id="skill-details"><div class="skill-summary"><div><div class="skill-heading"><span id="skill-swatch" aria-hidden="true"></span><strong>Skill <output id="rollout-skill">—</output></strong></div><p id="skill-duration">—</p><p id="skill-progress" class="small-label">—</p></div><div class="duration-legend"><span>Selected Duration (Actions)</span><div class="duration-spectrum" aria-hidden="true"></div><div class="duration-scale"><span>1</span><span>10</span><span>20</span></div></div></div>
-            <div class="skill-navigation"><button id="skill-prev" disabled>← Previous Skill</button><button id="skill-next" disabled>Next Skill →</button></div>
-            <div class="timeline-heading"><span>Executed Skill Durations</span><span>Select a Skill</span></div><div class="timeline-wrap"><div id="skill-timeline" role="group" aria-label="Executed skills; arrow keys move between skills"></div><div id="timeline-cursor" aria-hidden="true"></div></div><div class="timeline-time"><span>0 s</span><span id="episode-duration">—</span></div>
-          </div>
+
         </div>
         <p id="rollout-error" class="error" hidden role="alert"></p>
       </figure>
     </div>
+    <div id="skill-details">
+      <div class="skill-control-row">
+        <div class="skill-summary"><div class="skill-heading"><span id="skill-swatch" aria-hidden="true"></span><strong>Skill <output id="rollout-skill">—</output></strong></div><p id="skill-duration">—</p><p id="skill-progress" class="small-label">—</p></div>
+        <div class="skill-navigation"><button id="skill-prev" disabled>← Previous Skill</button><button id="skill-next" disabled>Next Skill →</button></div>
+        <div class="duration-legend"><span>Selected Duration (Actions)</span><div class="duration-spectrum" aria-hidden="true"></div><div class="duration-scale"><span>1</span><span>10</span><span>20</span></div></div>
+      </div>
+      <div class="timeline-heading"><span>Executed Skill Durations</span><span>Select a Skill</span></div><div class="timeline-wrap"><div id="skill-timeline" role="group" aria-label="Executed skills; arrow keys move between skills"></div><div id="timeline-cursor" aria-hidden="true"></div></div><div class="timeline-time"><span>0 s</span><span id="episode-duration">—</span></div>
+    </div>
     <aside class="results-panel" aria-label="Aggregate performance comparison">
-      <div class="score-headline"><span id="score-method-name">SkillReasoner · High</span><strong id="aggregate-score">—</strong><h3 id="result-metric">Normalized Task Score</h3></div>
+      <div class="score-headline"><span id="score-method-name">SkillReasoner · High</span><div class="score-explainer"><strong id="aggregate-score">—</strong><h3><button id="score-help" aria-describedby="metric-definition"><span id="result-metric">Normalized Task Score</span></button></h3><span id="metric-definition" class="score-tooltip" role="tooltip">50% final object–goal overlap + 50% normalized route progress.</span></div></div>
       <div id="result-chart" role="group" aria-label="Method scores; select a method to view recordings"></div>
       <p class="annotation chart-instruction">Select a method above to view its recordings.</p>
     </aside>
   </div>
-  <div class="results-definition"><p id="metric-definition">Normalized task score assigns 50% to final object–goal overlap and 50% to normalized reduction in remaining nominal-route distance.</p><details><summary>Evaluation Details</summary><p>Percentages are from Table 1. Success requires 95% object–goal overlap; trials end after at most 720 control steps. Privileged behavior cloning baselines use 50 expert demonstrations from the test task distributions.</p><p>Episodes are selected examples, separate from the aggregate scores. Baselines use retained paper checkpoints with saved pusher and object poses. SkillReasoner examples use varying planning configurations.</p></details></div>
+
 </section>
 
 <section id="real-world"><div class="section-heading"><h2>Real-World Results</h2></div><p>Recorded play with top-contact sliding and side-contact pushing.</p><div class="video-pair"><figure><video controls playsinline muted preload="none" poster="assets/top-contact.jpg" aria-label="Recorded play: top-contact sliding"><source src="assets/top-contact.mp4" type="video/mp4"></video><figcaption><strong>Top-Contact Sliding.</strong> Recorded play · 1×.</figcaption></figure><figure><video controls playsinline muted preload="none" poster="assets/side-contact.jpg" aria-label="Recorded play: side-contact pushing"><source src="assets/side-contact.mp4" type="video/mp4"></video><figcaption><strong>Side-Contact Pushing.</strong> Recorded play · 1×.</figcaption></figure></div></section>
