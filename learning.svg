@@ -9,11 +9,11 @@
     <text x="24" y="32" class="learning-label">STATE AND SKILL REPRESENTATIONS</text>
     <text x="24" y="72" class="learning-subtitle">Latent state through goal feature prediction</text>
     <rect x="25" y="140" width="167" height="78" rx="4" class="learning-input"/>
-    <text x="108" y="167" text-anchor="middle">History hₜ</text><text x="108" y="194" text-anchor="middle" class="learning-caption">RGB + proprioception</text>
+    <text x="108" y="167" text-anchor="middle">History h<tspan class="math-sub">t</tspan></text><text x="108" y="194" text-anchor="middle" class="learning-caption">RGB + proprioception</text>
     <path d="M202 179H230" class="learning-flow" marker-end="url(#learn-arrow)"/>
     <rect x="244" y="149" width="153" height="60" rx="4" class="learning-module"/><text x="320" y="185" text-anchor="middle">State encoder E</text>
     <path d="M408 179H443" class="learning-flow" marker-end="url(#learn-arrow)"/>
-    <circle cx="474" cy="179" r="25" class="learning-state"/><text x="474" y="185" text-anchor="middle">zₜ</text>
+    <circle cx="474" cy="179" r="25" class="learning-state"/><text x="474" y="185" text-anchor="middle">z<tspan class="math-sub">t</tspan></text>
     <path d="M510 179H542" class="learning-flow" marker-end="url(#learn-arrow)"/>
     <rect x="556" y="149" width="143" height="60" rx="4" class="learning-module"/><text x="627" y="185" text-anchor="middle">Grounding G</text>
     <path d="M711 179H739" class="learning-flow" marker-end="url(#learn-arrow)"/>
@@ -40,7 +40,7 @@
     <text x="529" y="298" text-anchor="middle" class="learning-caption">Fixed-length skill tokens u</text>
     <path d="M593 242H623" class="learning-flow" marker-end="url(#learn-arrow)"/>
     <rect x="637" y="210" width="135" height="64" rx="4" class="learning-module"/><text x="704" y="248" text-anchor="middle">Skill decoder D</text>
-    <circle cx="704" cy="122" r="24" class="learning-state"/><text x="704" y="128" text-anchor="middle">zₜ</text><path d="M704 157V195" class="learning-flow conditioning-flow" marker-end="url(#learn-arrow)"/>
+    <circle cx="704" cy="122" r="24" class="learning-state"/><text x="704" y="128" text-anchor="middle">z<tspan class="math-sub">t</tspan></text><path d="M704 157V195" class="learning-flow conditioning-flow" marker-end="url(#learn-arrow)"/>
     <path d="M784 242H804" class="learning-flow" marker-end="url(#learn-arrow)"/>
     <rect x="818" y="201" width="117" height="82" rx="4" class="learning-output"/><text x="876" y="232" text-anchor="middle">Actions</text><text x="876" y="260" text-anchor="middle">Duration d</text>
     <path d="M876 297V320" class="learning-supervision" marker-end="url(#target-arrow)"/>
@@ -48,30 +48,35 @@
     <text x="876" y="372" text-anchor="middle" class="learning-caption">Duration d</text>
     <text x="25" y="364" class="learning-caption">The observations let Q encode what the actions achieved.</text>
   </g>
-  <g class="learning-frozen-panel">
-    <text x="24" y="32" class="learning-label">PROPOSAL, DYNAMICS, AND VALUE</text>
-    <text x="24" y="72" class="learning-subtitle">Freeze the representation modules E, Q, D, and G</text>
-    <g class="frozen-modules">
-      <rect x="87" y="140" width="166" height="75" rx="4"/><rect x="285" y="140" width="166" height="75" rx="4"/><rect x="483" y="140" width="166" height="75" rx="4"/><rect x="681" y="140" width="166" height="75" rx="4"/>
-      <text x="170" y="185" text-anchor="middle">State encoder E</text><text x="368" y="185" text-anchor="middle">Skill encoder Q</text><text x="566" y="185" text-anchor="middle">Skill decoder D</text><text x="764" y="185" text-anchor="middle">Grounding G</text>
-    </g>
-    <text x="170" y="246" text-anchor="middle" class="learning-caption">Frozen</text><text x="368" y="246" text-anchor="middle" class="learning-caption">Frozen</text><text x="566" y="246" text-anchor="middle" class="learning-caption">Frozen</text><text x="764" y="246" text-anchor="middle" class="learning-caption">Frozen</text>
-    <path d="M468 266V300" class="learning-flow" marker-end="url(#learn-arrow)"/>
-    <text x="468" y="340" text-anchor="middle">Encoded states z, endpoints z′, and skills u</text>
-    <text x="468" y="376" text-anchor="middle" class="learning-caption">Search components do not ingest raw high-dimensional data.</text>
-  </g>
   <g class="learning-search-panel">
     <text x="24" y="32" class="learning-label">PROPOSAL, DYNAMICS, AND VALUE</text>
-    <text x="24" y="72" class="learning-subtitle">Learn the search components on frozen representations</text>
-    <text x="110" y="141" text-anchor="middle">State z</text><text x="110" y="230" text-anchor="middle">State z, skill u</text><text x="110" y="319" text-anchor="middle">State z, goal z𝗀</text>
-    <path d="M218 135H280M218 224H280M218 313H280" class="learning-flow" pathLength="1" marker-end="url(#learn-arrow)"/>
-    <rect x="296" y="105" width="193" height="60" rx="4" class="learning-module"/><text x="392" y="141" text-anchor="middle">Proposal P</text>
-    <rect x="296" y="194" width="193" height="60" rx="4" class="learning-module"/><text x="392" y="230" text-anchor="middle">Dynamics F</text>
-    <rect x="296" y="283" width="193" height="60" rx="4" class="learning-module"/><text x="392" y="319" text-anchor="middle">Value V</text>
-    <path d="M505 135H558M505 224H558M505 313H558" class="learning-flow" pathLength="1" marker-end="url(#learn-arrow)"/>
-    <text x="584" y="131">Q-encoded skills</text><text x="584" y="158" class="learning-caption">Learn to sample u from z</text>
-    <text x="584" y="220">Encoded endpoints E(hₜ₊d)</text><text x="584" y="247" class="learning-caption">Predict the result of a skill</text>
-    <text x="584" y="309">Negative goal-reaching cost</text><text x="584" y="336" class="learning-caption">Duration-aware, from hindsight goals</text>
-    <text x="24" y="389" class="learning-caption">E, Q, D, G remain frozen while P, F, V are learned.</text>
+    <text x="24" y="65" class="learning-subtitle">Learn on frozen state and skill representations</text>
+    <text x="25" y="112" class="learning-caption">Frozen</text>
+    <g class="frozen-modules">
+      <rect x="132" y="86" width="193" height="44" rx="4"/><rect x="334" y="86" width="193" height="44" rx="4"/><rect x="536" y="86" width="193" height="44" rx="4"/><rect x="738" y="86" width="193" height="44" rx="4"/>
+      <text x="228" y="113" text-anchor="middle">State encoder E</text><text x="430" y="113" text-anchor="middle">Skill encoder Q</text><text x="632" y="113" text-anchor="middle">Skill decoder D</text><text x="834" y="113" text-anchor="middle">Grounding G</text>
+    </g>
+    <text x="25" y="160" class="learning-label">INPUTS</text><text x="296" y="160" class="learning-label">LEARNED COMPONENT</text><text x="584" y="160" class="learning-label">TRAINING TARGET</text>
+    <g class="proposal-training">
+      <text x="110" y="203" text-anchor="middle">State z</text>
+      <path d="M218 197H280" class="learning-flow" pathLength="1" marker-end="url(#learn-arrow)"/>
+      <rect x="296" y="170" width="193" height="55" rx="4" class="learning-module"/><text x="392" y="203" text-anchor="middle">Proposal P</text>
+      <path d="M505 197H558" class="learning-flow" pathLength="1" marker-end="url(#learn-arrow)"/>
+      <text x="584" y="203">Q-encoded skills u</text>
+    </g>
+    <g class="dynamics-training">
+      <text x="110" y="282" text-anchor="middle">State z, skill u</text>
+      <path d="M218 276H280" class="learning-flow" pathLength="1" marker-end="url(#learn-arrow)"/>
+      <rect x="296" y="249" width="193" height="55" rx="4" class="learning-module"/><text x="392" y="282" text-anchor="middle">Dynamics F</text>
+      <path d="M505 276H558" class="learning-flow" pathLength="1" marker-end="url(#learn-arrow)"/>
+      <text x="584" y="282" aria-label="Encoded endpoints E of history h sub t plus d">Encoded endpoints E(h<tspan class="math-sub">t+d</tspan>)</text>
+    </g>
+    <g class="value-training">
+      <text x="110" y="361" text-anchor="middle" aria-label="State z, goal z sub g">State z, goal z<tspan class="math-sub">g</tspan></text>
+      <path d="M218 355H280" class="learning-flow" pathLength="1" marker-end="url(#learn-arrow)"/>
+      <rect x="296" y="328" width="193" height="55" rx="4" class="learning-module"/><text x="392" y="361" text-anchor="middle">Value V</text>
+      <path d="M505 355H558" class="learning-flow" pathLength="1" marker-end="url(#learn-arrow)"/>
+      <text x="584" y="351">Negative goal-reaching cost</text><text x="584" y="378" class="learning-caption">Duration-aware, from hindsight goals</text>
+    </g>
   </g>
 </svg>

@@ -31,8 +31,7 @@
   const learningCopy = [
     'State encoder E encodes a 3-step observation–action history into latent state z. State grounding G predicts goal features (keypoints); coordinatewise variance weights feature errors during training.',
     'Sample interaction windows of varying duration. Skill encoder Q compresses each window into discrete skill tokens u. Skill decoder D reconstructs its actions and predicts the duration, conditioned on state z.',
-    'Freeze E, Q, D, and G, then learn the proposal, dynamics, and value on the resulting latent states and skills.',
-    'Proposal P learns to sample Q-encoded skills from state z. Dynamics F predicts their encoded endpoints. Value V learns negative, duration-aware goal-reaching cost from hindsight goals.'
+    'Freeze E, Q, D, and G, then learn the proposal, dynamics, and value on the resulting latent states and skills.'
   ];
   const windowDurations = [2, 5, 7];
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -77,7 +76,7 @@
     if (learningTimer) { stopLearning(); return; }
     el('learning-play').textContent = 'Pause explanation';
     el('learning-play').setAttribute('aria-pressed', 'true');
-    learningTimer = setInterval(() => setLearningStage((learningStage + 1) % 4), 7000);
+    learningTimer = setInterval(() => setLearningStage((learningStage + 1) % learningCopy.length), 7000);
     syncWindowAnimation();
   });
   el('next-window').addEventListener('click', () => {
