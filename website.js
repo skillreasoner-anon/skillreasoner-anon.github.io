@@ -96,10 +96,10 @@
     }
   }
 
-  const descriptions = {
-    narrow_door: ['Narrow Passage', 'Extended free-space motion with fine adjustments near the passage and final goal.'],
-    multi_room: ['Multi-Room', 'Two possible object pathways to the same goal.'],
-    three_door: ['Winding Maze', 'Long-horizon rollouts through successive passages.']
+  const environmentNames = {
+    narrow_door: 'Narrow Passage',
+    multi_room: 'Multi-Room',
+    three_door: 'Winding Maze'
   };
   const blockShape = [[-60,0],[60,0],[60,30],[15,30],[15,120],[-15,120],[-15,30],[-60,30]];
   // Same duration spectrum as the paper's annotated skill timelines: 1–20 actions.
@@ -160,9 +160,15 @@
     });
     context.restore();
   }
+  function seekFrame(nextFrame) {
+    if (!recording) return;
+    frame = Math.max(0, Math.min(recording.control_steps, nextFrame));
+    position = frame; lastTimestamp = null;
+    render();
+  }
   function seekSkill(index) {
     if (!recording || index < 0 || index >= recording.cycle_starts.length) return;
-    stopRollout(); frame = recording.cycle_starts[index]; position = frame; render();
+    seekFrame(recording.cycle_starts[index]);
   }
   function buildTimeline() {
     timeline.replaceChildren();
@@ -228,14 +234,12 @@
     el('rollout-episode').replaceChildren(...options); el('rollout-episode').value = String(episodeIndex);
     el('episode-prev').disabled = episodeIndex === 0;
     el('episode-next').disabled = episodeIndex === episodes.length-1;
-    el('rollout-title').textContent = descriptions[key][0]; el('rollout-description').textContent = descriptions[key][1];
-    el('rollout-depth').textContent = `${recording.depth} skills`;
+    el('rollout-title').textContent = environmentNames[key];
     el('rollout-identity').textContent = `${(recording.final_overlap*100).toFixed(1)}% final object–goal overlap`;
     el('rollout-scrub').max = String(recording.control_steps);
     el('episode-duration').textContent = `${(recording.control_steps/recording.control_hz).toFixed(1)} s`;
-    el('rollout-outcome').textContent = recording.success ? 'Successful execution' : 'Failed execution';
     document.querySelectorAll('[data-outcome]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.outcome === outcome)));
-    canvas.setAttribute('aria-label', `${descriptions[key][0]}: ${outcome}, episode ${episodeIndex+1} of ${episodes.length}`);
+    canvas.setAttribute('aria-label', `${environmentNames[key]}: ${outcome}, episode ${episodeIndex+1} of ${episodes.length}`);
     canvas.dataset.recordingId = recording.recording_id;
     document.querySelectorAll('[data-rollout]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.rollout === key)));
     buildTimeline(); render();
@@ -258,7 +262,7 @@
     el('rollout-play').textContent = 'Pause rollout'; el('rollout-play').setAttribute('aria-pressed','true'); rolloutRAF = requestAnimationFrame(tick);
   });
   el('rollout-restart').addEventListener('click', () => selectRecording(selected,outcome,episodeIndex));
-  el('rollout-scrub').addEventListener('input', event => { if (!recording) return; stopRollout(); frame = Number(event.target.value); position = frame; render(); });
+  el('rollout-scrub').addEventListener('input', event => seekFrame(Number(event.target.value)));
   document.querySelectorAll('[data-rollout]').forEach(button => button.addEventListener('click', () => selectRecording(button.dataset.rollout)));
   document.querySelectorAll('[data-outcome]').forEach(button => button.addEventListener('click', () => selectRecording(selected, button.dataset.outcome)));
   el('rollout-episode').addEventListener('change', event => selectRecording(selected,outcome,Number(event.target.value)));

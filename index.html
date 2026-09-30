@@ -70,10 +70,10 @@
     <div class="rollout-grid">
       <div class="rollout-scene"><canvas id="rollout-world" width="768" height="768" aria-label="Recorded rollout rendered from saved pusher and block poses">Enable JavaScript to explore recorded states.</canvas><div class="playback"><button id="rollout-play" disabled aria-pressed="false">Play rollout</button><button id="rollout-restart" disabled>Restart</button><span class="playback-speed">1× speed</span><output id="rollout-time">0.0 s</output></div><label class="path-toggle"><input id="show-path" type="checkbox" checked>Recorded pusher path</label></div>
       <div class="rollout-notes">
-        <p class="small-label" id="rollout-outcome">Successful execution</p><h3 id="rollout-title">Multi-Room</h3><p id="rollout-description">Two possible object pathways to the same goal.</p>
+        <h3 id="rollout-title">Multi-Room</h3>
         <div class="duration-legend"><span>Selected skill duration (actions)</span><div class="duration-spectrum" aria-hidden="true"></div><div class="duration-scale"><span>1</span><span>10</span><span>20</span></div></div>
         <div class="current-skill"><div class="skill-heading"><span id="skill-swatch" aria-hidden="true"></span><strong>Skill <output id="rollout-skill">—</output></strong></div><p id="skill-duration">—</p><p id="skill-progress" class="small-label">—</p><div class="skill-navigation"><button id="skill-prev" disabled>← Previous skill</button><button id="skill-next" disabled>Next skill →</button></div></div>
-        <dl class="rollout-stats"><div><dt>Control step</dt><dd id="rollout-step">—</dd></div><div><dt>Search depth</dt><dd id="rollout-depth">—</dd></div></dl><p class="annotation" id="rollout-identity"></p>
+        <dl class="rollout-stats"><div><dt>Control step</dt><dd id="rollout-step">—</dd></div></dl><p class="annotation" id="rollout-identity"></p>
       </div>
     </div>
     <label class="scrub-label" for="rollout-scrub">Recorded execution</label><input id="rollout-scrub" type="range" min="0" max="206" value="0" disabled>
