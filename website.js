@@ -30,7 +30,7 @@
 
   const learningCopy = [
     'State encoder E encodes a 3-step observation–action history into latent state z. State grounding G predicts goal features (keypoints); coordinatewise variance weights feature errors during training.',
-    'Sample interaction windows of varying duration. Skill encoder Q compresses each window into discrete tokens u. Decoder D reconstructs its actions and predicts the duration, conditioned on state z.',
+    'Sample interaction windows of varying duration. Skill encoder Q compresses each window into discrete skill tokens u. Skill decoder D reconstructs its actions and predicts the duration, conditioned on state z.',
     'Freeze E, Q, D, and G, then learn the proposal, dynamics, and value on the resulting latent states and skills.',
     'Proposal P learns to sample Q-encoded skills from state z. Dynamics F predicts their encoded endpoints. Value V learns negative, duration-aware goal-reaching cost from hindsight goals.'
   ];

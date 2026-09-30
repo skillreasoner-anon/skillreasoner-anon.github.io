@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 410" role="img" aria-labelledby="learning-title learning-desc" id="learning-diagram" data-learning-stage="0">
   <title id="learning-title">Learning state and skill representations, then proposal, dynamics, and value</title>
-  <desc id="learning-desc">Learn the state encoder and grounding through goal feature prediction. Learn the skill encoder and decoder by reconstructing the actions and duration of varying-horizon play windows. Freeze the representation modules E, Q, D, G, then learn proposal P, dynamics F, and value V on encoded states and skills.</desc>
+  <desc id="learning-desc">Learn the state encoder and grounding through goal feature prediction. Learn the skill encoder and skill decoder by reconstructing the actions and duration of varying-horizon play windows. Freeze the representation modules E, Q, D, G, then learn proposal P, dynamics F, and value V on encoded states and skills.</desc>
   <defs>
     <marker id="learn-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#627f90"/></marker>
     <marker id="target-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#985c48"/></marker>
@@ -37,9 +37,9 @@
     <rect x="283" y="210" width="140" height="64" rx="4" class="learning-module"/><text x="353" y="248" text-anchor="middle">Skill encoder Q</text>
     <path d="M436 242H463" class="learning-flow" marker-end="url(#learn-arrow)"/>
     <g class="learning-tokens"><rect x="477" y="226" width="29" height="32"/><rect x="514" y="226" width="29" height="32"/><rect x="551" y="226" width="29" height="32"/></g>
-    <text x="529" y="298" text-anchor="middle" class="learning-caption">Fixed-length tokens u</text>
+    <text x="529" y="298" text-anchor="middle" class="learning-caption">Fixed-length skill tokens u</text>
     <path d="M593 242H623" class="learning-flow" marker-end="url(#learn-arrow)"/>
-    <rect x="637" y="210" width="135" height="64" rx="4" class="learning-module"/><text x="704" y="248" text-anchor="middle">Decoder D</text>
+    <rect x="637" y="210" width="135" height="64" rx="4" class="learning-module"/><text x="704" y="248" text-anchor="middle">Skill decoder D</text>
     <circle cx="704" cy="122" r="24" class="learning-state"/><text x="704" y="128" text-anchor="middle">zₜ</text><path d="M704 157V195" class="learning-flow conditioning-flow" marker-end="url(#learn-arrow)"/>
     <path d="M784 242H804" class="learning-flow" marker-end="url(#learn-arrow)"/>
     <rect x="818" y="201" width="117" height="82" rx="4" class="learning-output"/><text x="876" y="232" text-anchor="middle">Actions</text><text x="876" y="260" text-anchor="middle">Duration d</text>
