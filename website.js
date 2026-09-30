@@ -42,7 +42,7 @@
     el('sampled-window').setAttribute('width', String(34 * duration));
     el('window-bracket').setAttribute('d', `M23 169V177H${23 + 34 * duration}V169`);
     el('sampled-duration').textContent = `Sampled window · d = ${duration}`;
-    el('window-example').textContent = `Illustrative window: d = ${duration}`;
+    el('window-example').textContent = `Window duration: d = ${duration}`;
     document.querySelectorAll('.play-window-frames rect').forEach((rect, i) => { rect.dataset.sampled = String(i < duration); });
   }
   function syncWindowAnimation() {
@@ -92,7 +92,7 @@
       setLearningStage(0);
       document.querySelectorAll('button[data-learning-stage], #learning-play, #next-window').forEach(button => button.disabled = false);
     } catch (error) {
-      el('learning-visual').textContent = 'The learning illustration could not load. Please reload the page.';
+      el('learning-visual').textContent = 'The learning diagram could not load. Please reload the page.';
     }
   }
 
