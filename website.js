@@ -165,40 +165,29 @@
   }
   function memoryKey() { return `${selected}/${method}/${outcome}`; }
   function activeSkill() { return recording?.cycle_starts?.findLastIndex(start => start <= frame) ?? -1; }
-  function drawPusherPath(context, data, end, color = '#79848A') {
-    if (!el('show-path').checked) return;
-    context.save(); context.strokeStyle = color; context.lineWidth = 3; context.globalAlpha = .7;
-    context.beginPath();
-    for (let i=0; i<=end; i++) {
-      const state = data.states[i];
-      if (i === 0) context.moveTo(state[0],state[1]); else context.lineTo(state[0],state[1]);
-    }
-    context.stroke(); context.restore();
-  }
   function drawRecordedPath(context) {
-    if (!el('show-path').checked) return;
-    if (!recording.cycle_starts?.length) {
-      drawPusherPath(context,recording,frame); return;
-    }
+    if (method !== 'ours' || !recording.cycle_starts?.length || frame >= recording.control_steps) return;
     const active = activeSkill();
+    if (active < 0) return;
     context.save(); context.lineCap = 'round'; context.lineJoin = 'round';
-    const order = recording.cycle_starts.map((_,index) => index).filter(index => index !== active);
+    // Saved execution paths: the remaining current skill and the next three.
+    // Draw the current skill last so its color stays clear at intersections.
+    const endIndex = Math.min(active + 4, recording.cycle_starts.length);
+    const order = Array.from({length:endIndex-active-1}, (_,i) => active+i+1);
     order.push(active);
     order.forEach(index => {
-      const start = recording.cycle_starts[index], end = recording.cycle_starts[index+1] ?? recording.control_steps;
-      context.globalAlpha = index === active ? 1 : (end <= frame ? .5 : .2);
-      context.strokeStyle = durationColor(recording.skill_durations[index]); context.lineWidth = index === active ? 4 : 2;
+      const start = Math.max(frame, recording.cycle_starts[index]);
+      const end = recording.cycle_starts[index+1] ?? recording.control_steps;
+      if (end <= start) return;
+      context.globalAlpha = index === active ? 1 : .65;
+      context.strokeStyle = durationColor(recording.skill_durations[index]);
+      context.lineWidth = index === active ? 4 : 3;
       context.beginPath();
       for (let i=start; i<=end; i++) {
         const state = recording.states[i];
         if (i === start) context.moveTo(state[0],state[1]); else context.lineTo(state[0],state[1]);
       }
       context.stroke();
-      if (index === active) {
-        const state = recording.states[end];
-        context.beginPath(); context.arc(state[0],state[1],4,0,Math.PI*2);
-        context.fillStyle = context.strokeStyle; context.fill(); context.strokeStyle = '#fff'; context.lineWidth = 1; context.stroke();
-      }
     });
     context.restore();
   }
@@ -286,7 +275,6 @@
     el('recording-unavailable').hidden = Boolean(recording);
     el('execution-controls').hidden = !recording;
     el('skill-details').hidden = method !== 'ours';
-    el('show-path').parentElement.hidden = !recording;
     if (recording) {
       el('rollout-scrub').max = String(recording.control_steps);
       el('episode-duration').textContent = `${(recording.control_steps/recording.control_hz).toFixed(1)} s`;
@@ -329,7 +317,6 @@
   el('episode-next').addEventListener('click', () => selectRecording(selected,outcome,episodeIndex+1));
   el('skill-prev').addEventListener('click', () => seekSkill(activeSkill()-1));
   el('skill-next').addEventListener('click', () => seekSkill(activeSkill()+1));
-  el('show-path').addEventListener('change', () => { if (recording) render(); });
   el('return-ours').addEventListener('click', () => { method='ours'; selectRecording(selected); });
   el('recorded-method').addEventListener('change', event => { method=event.target.value; selectRecording(selected); });
   function buildResults() {
@@ -338,13 +325,15 @@
     }));
     el('recorded-method').disabled = false;
     const chart = el('result-chart'); chart.replaceChildren();
-    const groups = {ours:'SkillReasoner · Test-Time Compute', play:'Play Data Baselines', expert:'Privileged Expert Demos'};
+    const groups = {ours:'SkillReasoner', play:'Play Data Baselines', expert:'Privileged Expert Demos'};
     for (const [group, label] of Object.entries(groups)) {
       const heading = document.createElement('h4'); heading.textContent = label; chart.append(heading);
       if (group === 'ours') {
         const axis = document.createElement('div'); axis.className = 'bar-axis';
         [0,50,100].forEach(value => { const tick=document.createElement('span'); tick.textContent=`${value}%`; axis.append(tick); });
         chart.append(axis);
+        const computeLabel = document.createElement('p'); computeLabel.className = 'compute-label';
+        computeLabel.textContent = 'Test-Time Compute'; chart.append(computeLabel);
       }
       for (const row of results.methods.filter(m=>m.group === group)) {
         const button = document.createElement('button'); button.type = 'button'; button.className = `score-row ${group}`;
@@ -372,7 +361,6 @@
     el('aggregate-score').textContent = `${score.toFixed(2)}%`;
     el('score-method-name').textContent = method === 'ours' ? selectedRow.label : methodLabel(method);
     el('result-metric').textContent = row.metric;
-    el('result-cohort').textContent = 'Paper, Table 1';
     document.querySelectorAll('.score-row').forEach(button => {
       const value=row.scores[button.dataset.method], id=button.dataset.method;
       button.querySelector('.bar-value').textContent = `${value.toFixed(2)}%`;
