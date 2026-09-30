@@ -58,3 +58,24 @@ button,select{font:inherit;font-size:16px;line-height:1.4;color:inherit;min-heig
 .learning-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}
 tspan.math-sub{font-size:70%;baseline-shift:sub}
 @media(max-width:700px){.learning-tabs{grid-template-columns:1fr}}
+
+/* Environment, outcome and episode are distinct recording controls. */
+.recording-controls{display:flex;flex-wrap:wrap;gap:20px 28px;margin:26px 0 28px;align-items:start}
+.recording-controls fieldset{border:0;padding:0;margin:0;min-width:0}
+.recording-controls legend,.episode-control>label{display:block;font-size:16px;font-weight:600;margin-bottom:9px;padding:0}
+.recording-controls .rollout-tabs,.recording-controls .outcome-tabs{margin:0}
+.episode-picker{display:flex;gap:6px}.episode-picker select{min-width:155px}.episode-picker button{min-width:42px}
+.rollout-grid{grid-template-columns:minmax(0,1.2fr) minmax(280px,1fr);gap:36px}
+.rollout-notes h3{margin:8px 0}.rollout-notes>p{margin-bottom:18px}
+.path-toggle{display:flex;gap:9px;align-items:center;margin-top:12px;font-size:16px;color:var(--muted)}.path-toggle input{width:17px;height:17px;accent-color:var(--accent)}
+.duration-legend{font-size:16px;margin:24px 0 20px;max-width:310px}.duration-spectrum{height:10px;margin-top:8px;background:linear-gradient(90deg,#CD8068,#C5A47E,#79848A)}.duration-scale{display:flex;justify-content:space-between;font-size:14px;margin-top:4px;font-variant-numeric:tabular-nums}
+.current-skill{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:18px 0}
+.skill-heading{display:flex;align-items:center;gap:9px}#skill-swatch{width:14px;height:14px;flex-shrink:0}.current-skill p{margin:8px 0}.current-skill #skill-duration{font-size:23px;margin:10px 0 5px;font-variant-numeric:tabular-nums}.skill-navigation{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}.skill-navigation button{font-size:15px}
+.rollout-stats{margin:14px 0}.rollout-stats>div{font-size:16px}
+.timeline-heading,.timeline-time{display:flex;justify-content:space-between;gap:12px;font-size:15px;color:var(--muted)}.timeline-heading{margin-top:18px;margin-bottom:7px}.timeline-time{margin-top:7px;font-variant-numeric:tabular-nums}
+.timeline-wrap{position:relative}#skill-timeline{display:flex;width:100%;height:44px;margin:0;overflow:hidden;border:1px solid var(--line)}
+#skill-timeline button{flex-basis:0;min-width:0;min-height:44px;padding:0;border:0;box-shadow:inset -1px 0 #ffffffb3;border-radius:0;background:var(--skill-color);color:#252522;font-size:12px;font-variant-numeric:tabular-nums;overflow:hidden}
+#skill-timeline button[aria-pressed="true"]{box-shadow:inset 0 0 0 2px #252522}#skill-timeline button:focus-visible{outline:2px solid #252522;outline-offset:-3px}
+#timeline-cursor{position:absolute;top:-3px;bottom:-3px;width:2px;background:#252522;transform:translateX(-1px);pointer-events:none}#timeline-cursor:before{content:"";position:absolute;left:-3px;top:-5px;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid #252522}
+@media(max-width:1000px){.recording-controls{gap:18px 24px}.episode-control{flex-basis:100%}.rollout-grid{gap:24px}}
+@media(max-width:700px){.recording-controls{gap:18px;margin:22px 0}.recording-controls fieldset,.episode-control{flex-basis:100%}.episode-picker select{flex:1}.episode-picker{width:100%}.rollout-grid{grid-template-columns:1fr}.rollout-notes>p{margin-bottom:12px}.duration-legend{max-width:none;margin:18px 0}.current-skill{padding:16px 0}.rollout-stats{display:block;margin:12px 0}.rollout-stats>div{display:flex}.rollout-stats dd{margin:0}.timeline-heading{font-size:14px}.timeline-time{font-size:14px}}
