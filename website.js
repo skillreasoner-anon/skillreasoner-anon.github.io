@@ -17,13 +17,13 @@
   }
   function stopExplanation() {
     clearInterval(explanationTimer); explanationTimer = null;
-    el('method-play').textContent = 'Play explanation';
+    el('method-play').textContent = 'Play Explanation';
     el('method-play').setAttribute('aria-pressed', 'false');
   }
   document.querySelectorAll('button[data-stage]').forEach(button => button.addEventListener('click', () => { stopExplanation(); setStage(Number(button.dataset.stage)); }));
   el('method-play').addEventListener('click', () => {
     if (explanationTimer) { stopExplanation(); return; }
-    el('method-play').textContent = 'Pause explanation';
+    el('method-play').textContent = 'Pause Explanation';
     el('method-play').setAttribute('aria-pressed', 'true');
     explanationTimer = setInterval(() => setStage((stage + 1) % 4), 2600);
   });
@@ -33,40 +33,59 @@
     'Sample interaction windows of varying duration. Skill encoder Q compresses each window into discrete skill tokens u. Skill decoder D reconstructs its actions and predicts the duration, conditioned on state z.',
     'Freeze E, Q, D, and G, then learn the proposal, dynamics, and value on the resulting latent states and skills.'
   ];
-  const windowDurations = [2, 5, 7];
+  // Selected durations use the same 1–20 scale as the paper's skill timelines.
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  let learningStage = 0, learningTimer = null, windowTimer = null, windowExample = 0;
-  function setWindowExample(index) {
-    windowExample = index;
-    const duration = windowDurations[index];
-    el('sampled-window').setAttribute('width', String(34 * duration));
-    el('window-bracket').setAttribute('d', `M23 169V177H${23 + 34 * duration}V169`);
-    el('sampled-duration').textContent = `Sampled window · d = ${duration}`;
-    el('window-example').textContent = `Window duration: d = ${duration}`;
-    document.querySelectorAll('.play-window-frames rect').forEach((rect, i) => { rect.dataset.sampled = String(i < duration); });
+  let learningStage = 0, learningTimer = null, windowTimer = null, windowPlaying = false;
+  function setWindowExample(start, duration) {
+    const left = 23 + 30*start, width = 30*duration, color = durationColor(duration);
+    el('learning-layout').style.setProperty('--window-color', color);
+    el('sampled-window').setAttribute('x', String(left));
+    el('sampled-window').setAttribute('width', String(width));
+    el('sampled-window').dataset.start = String(start);
+    el('sampled-window').dataset.duration = String(duration);
+    el('window-bracket').setAttribute('d', `M${left} 169V177H${left+width}V169`);
+    el('window-flow').setAttribute('d', `M${left+width/2} 177V190H353V196`);
+    el('sampled-duration').textContent = `Sampled Window · d = ${duration}`;
+    el('window-example').textContent = `Window Duration: d = ${duration}`;
+    el('window-position').textContent = `Steps ${start+1}–${start+duration}`;
+    if (!reducedMotion.matches) el('sampled-window').animate([{opacity:.35},{opacity:1}], {duration:350, easing:'ease-out'});
+    document.querySelectorAll('.play-window-frames rect').forEach((rect, i) => {
+      rect.dataset.sampled = String(i >= start && i < start+duration);
+    });
+  }
+  function sampleWindow() {
+    const duration = 1 + Math.floor(Math.random()*20);
+    const start = Math.floor(Math.random()*(21-duration));
+    setWindowExample(start, duration);
   }
   function syncWindowAnimation() {
     clearInterval(windowTimer); windowTimer = null;
-    if (learningStage === 1 && learningTimer && !reducedMotion.matches) {
-      windowTimer = setInterval(() => setWindowExample((windowExample + 1) % windowDurations.length), 2000);
-    }
+    el('window-play').disabled = reducedMotion.matches;
+    const active = learningStage === 1 && windowPlaying && !reducedMotion.matches;
+    el('window-play').textContent = active ? 'Pause Windows' : 'Play Windows';
+    el('window-play').setAttribute('aria-pressed', String(active));
+    if (active) windowTimer = setInterval(sampleWindow, 2000);
   }
-  reducedMotion.addEventListener('change', syncWindowAnimation);
+  reducedMotion.addEventListener('change', () => {
+    if (reducedMotion.matches) windowPlaying = false;
+    syncWindowAnimation();
+  });
   function setLearningStage(value) {
     learningStage = value;
     el('learning-diagram').dataset.learningStage = String(value);
     el('learning-layout').dataset.learningStage = String(value);
     el('window-explanation').hidden = value !== 1;
     el('learning-copy').parentElement.hidden = value === 1;
-    if (value === 1) setWindowExample(0);
+    windowPlaying = value === 1 && !reducedMotion.matches;
+    if (value === 1) setWindowExample(2, 2);
     syncWindowAnimation();
     el('learning-copy').textContent = learningCopy[value];
     document.querySelectorAll('button[data-learning-stage]').forEach(button => button.setAttribute('aria-pressed', String(Number(button.dataset.learningStage) === value)));
   }
   function stopLearning() {
     clearInterval(learningTimer); learningTimer = null;
-    clearInterval(windowTimer); windowTimer = null;
-    el('learning-play').textContent = 'Play explanation';
+    windowPlaying = false; syncWindowAnimation();
+    el('learning-play').textContent = 'Play Explanation';
     el('learning-play').setAttribute('aria-pressed', 'false');
   }
   document.querySelectorAll('button[data-learning-stage]').forEach(button => button.addEventListener('click', () => {
@@ -74,13 +93,17 @@
   }));
   el('learning-play').addEventListener('click', () => {
     if (learningTimer) { stopLearning(); return; }
-    el('learning-play').textContent = 'Pause explanation';
+    el('learning-play').textContent = 'Pause Explanation';
     el('learning-play').setAttribute('aria-pressed', 'true');
     learningTimer = setInterval(() => setLearningStage((learningStage + 1) % learningCopy.length), 7000);
+    if (learningStage === 1) windowPlaying = true;
     syncWindowAnimation();
   });
+  el('window-play').addEventListener('click', () => {
+    windowPlaying = !windowPlaying; syncWindowAnimation();
+  });
   el('next-window').addEventListener('click', () => {
-    stopLearning(); setWindowExample((windowExample + 1) % windowDurations.length);
+    stopLearning(); sampleWindow();
   });
   async function loadLearningDiagram() {
     try {
@@ -203,7 +226,7 @@
     el('rollout-step').textContent = `${frame} / ${recording.control_steps}`;
     el('rollout-skill').textContent = `${skillIndex+1} / ${starts.length}`;
     el('skill-duration').textContent = `${duration} actions · ${(duration/recording.control_hz).toFixed(1)} s`;
-    el('skill-progress').textContent = `Recorded execution: ${frame-start} / ${end-start} actions`;
+    el('skill-progress').textContent = `Recorded Execution: ${frame-start} / ${end-start} actions`;
     el('skill-swatch').style.backgroundColor = durationColor(duration);
     el('skill-prev').disabled = skillIndex === 0;
     el('skill-next').disabled = skillIndex === starts.length-1;
@@ -218,7 +241,7 @@
   function stopRollout() {
     playing = false; lastTimestamp = null;
     cancelAnimationFrame(rolloutRAF); rolloutRAF = null;
-    el('rollout-play').textContent = 'Play rollout'; el('rollout-play').setAttribute('aria-pressed','false');
+    el('rollout-play').textContent = 'Play Rollout'; el('rollout-play').setAttribute('aria-pressed','false');
   }
   function selectRecording(key, nextOutcome = outcome, nextEpisode = episodeMemory.get(`${key}/${nextOutcome}`) ?? 0) {
     if (!recordings) return;
@@ -259,7 +282,7 @@
     if (playing) { stopRollout(); return; }
     if (frame === recording.control_steps) { frame = 0; position = 0; render(); }
     playing = true; lastTimestamp = null;
-    el('rollout-play').textContent = 'Pause rollout'; el('rollout-play').setAttribute('aria-pressed','true'); rolloutRAF = requestAnimationFrame(tick);
+    el('rollout-play').textContent = 'Pause Rollout'; el('rollout-play').setAttribute('aria-pressed','true'); rolloutRAF = requestAnimationFrame(tick);
   });
   el('rollout-restart').addEventListener('click', () => selectRecording(selected,outcome,episodeIndex));
   el('rollout-scrub').addEventListener('input', event => seekFrame(Number(event.target.value)));
@@ -277,7 +300,7 @@
     demoLoaded = true; el('load-demo').disabled = true; el('load-demo').textContent = 'Loading…';
     el('status').textContent = 'Loading the demo…';
     const script = document.createElement('script'); script.src = 'demo/app.js?v=try-it-v10';
-    script.onerror = () => { demoLoaded = false; el('load-demo').disabled = false; el('load-demo').textContent = 'Retry loading demo'; el('status').textContent = 'Unable to load the demo. Please try again.'; };
+    script.onerror = () => { demoLoaded = false; el('load-demo').disabled = false; el('load-demo').textContent = 'Retry Loading Demo'; el('status').textContent = 'Unable to load the demo. Please try again.'; };
     document.body.append(script);
   });
   const demoStateObserver = new MutationObserver(() => {
