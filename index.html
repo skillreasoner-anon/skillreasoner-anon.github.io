@@ -8,12 +8,12 @@
 <link rel="preload" href="vendor/IBMPlexSans-600.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="vendor/IBMPlexSans-700.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="vendor/IBMPlexSerif-400.woff2" as="font" type="font/woff2" crossorigin>
-<title>SkillReasoner · Latent Skill Acquisition and Composition</title><link rel="stylesheet" href="styles.css"><script src="website.js" defer></script>
+<title>SkillReasoner · Latent Skill Acquisition and Composition</title><link rel="stylesheet" href="styles.css"><script src="website.js" defer></script><script src="search-story.js" defer></script>
 </head>
 <body>
 <a class="skip-link" href="#overview">Skip to content</a>
 
-<header id="top" class="paper-header"><p class="eyebrow">Anonymous Submission</p><h1>Latent Skill Acquisition and Composition<br class="desktop-break"> for Contact-Rich Manipulation</h1><nav class="page-nav" aria-label="Page sections"><div class="nav-inner"><a class="wordmark" href="#top">SkillReasoner</a><div class="nav-links"><a href="#method">Overview of SkillReasoner</a><a href="#learning">How SkillReasoner is Learned</a><a href="#rollouts">Simulation Results</a><a href="#real-world">Real-World Results</a><a href="#try-it">Try It Yourself</a></div></div></nav></header>
+<header id="top" class="paper-header"><p class="eyebrow">Anonymous Submission</p><h1>Latent Skill Acquisition and Composition<br class="desktop-break"> for Contact-Rich Manipulation</h1><nav class="page-nav" aria-label="Page sections"><div class="nav-inner"><a class="wordmark" href="#top">SkillReasoner</a><div class="nav-links"><a href="#method">Overview of SkillReasoner</a><a href="#learning">How SkillReasoner is Learned</a><a href="#search-story">Inside the Search</a><a href="#rollouts">Simulation Results</a><a href="#real-world">Real-World Results</a><a href="#try-it">Try It Yourself</a></div></div></nav></header>
 <main>
 <section id="overview">
 <div class="section-heading"><h2>Abstract</h2></div>
@@ -59,6 +59,19 @@
     </div>
     <p class="diagram-scroll-hint">Scroll the diagram horizontally to inspect each stage.</p>
     <div class="step-copy"><p id="learning-copy" aria-live="polite">The state encoder E encodes a 3-step observation–action history into latent state z. State grounding G predicts goal features (keypoints) and coordinatewise variance, which weights feature errors during training.</p></div>
+  </figure>
+</section>
+
+<section id="search-story">
+  <div class="section-heading"><h2>Many Possible Futures. One Next Move.</h2></div>
+  <p>SkillReasoner imagines sequences of skills, selects a promising route, and executes only the first skill. Then it looks again.</p>
+  <figure class="search-figure">
+    <div class="search-stage">
+      <div class="search-board"><div class="search-board-heading"><span>Inside the Search</span><span id="search-cycle">Replan 1 / 4</span></div><canvas id="search-canvas" width="816" height="816" role="img" aria-label="Saved beam-search candidate object poses, selected imagined route, goal, and recorded object and pusher execution"></canvas><div class="search-legend"><span>● Observed</span><span>— Imagined</span><span>▧ Goal</span></div></div>
+      <div class="search-narrative"><ol id="search-steps"><li class="active">Imagine</li><li>Select</li><li>Act</li><li>Replan</li></ol><div><p class="search-kicker">Closed-Loop Skill Search</p><h3 id="search-phase-title">Explore possible futures</h3><p id="search-caption">Loading saved search…</p></div><div class="search-plan"><p>One sequence. Only the first skill acts.</p><div id="search-skills" aria-label="Selected skill durations"></div><span id="search-tail"></span></div></div>
+    </div>
+    <div class="search-controls"><button id="search-play" aria-pressed="false" disabled>Play</button><button id="search-replay" disabled>Replay</button><label for="search-seek">Search sequence</label><input id="search-seek" type="range" min="0" max="36" step="0.05" value="0" disabled></div>
+    <figcaption>Four consecutive replans from a recorded Winding Maze run. Lines connect saved predicted object poses; the reveal is staged and slowed down to show candidate selection. Solid motion is recorded execution.</figcaption>
   </figure>
 </section>
 
