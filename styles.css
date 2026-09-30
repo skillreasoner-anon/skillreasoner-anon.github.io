@@ -128,3 +128,13 @@ tspan.math-sub{font-size:70%;baseline-shift:sub}
 .score-explainer:not(.tooltip-dismissed):hover .score-tooltip,.score-explainer:not(.tooltip-dismissed):focus-within .score-tooltip{visibility:visible;opacity:1;pointer-events:auto}
 @media(max-width:1000px){.skill-control-row{gap:16px}}
 @media(max-width:700px){.results-layout .execution-panel,.results-layout .results-panel,#skill-details{grid-column:1;grid-row:auto}.skill-control-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px 16px}.skill-control-row .duration-legend{grid-column:2;grid-row:1}.skill-control-row .skill-navigation{grid-column:1/-1;grid-row:2;justify-content:flex-start}.skill-control-row .duration-legend{max-width:none}.skill-control-row .skill-summary{min-width:0}}
+
+/* Mathematical notation and readable labels above the search branches. */
+.math-symbol{font-family:'IBM Plex Serif',Georgia,serif;font-style:italic}
+.math-sub{font-style:normal}
+.skill-tags rect{fill:#eee0cd;fill-opacity:1;stroke:#b2936c}
+.skill-tags text{fill:#554735;font-size:18px}
+.skill-tags .math-sub{baseline-shift:-3px}
+.trace-order{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;margin:0 0 8px;color:var(--muted)}
+.trace-order span:before{content:'';display:inline-block;width:22px;border-top:3px solid #79848A;vertical-align:middle;margin-right:5px}
+.trace-order span:nth-child(1):before{opacity:.85}.trace-order span:nth-child(2):before{opacity:.5}.trace-order span:nth-child(3):before{opacity:.25}

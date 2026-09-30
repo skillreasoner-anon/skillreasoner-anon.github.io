@@ -9,17 +9,17 @@
     <text x="24" y="32" class="learning-label">State Representation Learning</text>
     <text x="24" y="72" class="learning-subtitle">Latent State through Goal Feature Prediction</text>
     <rect x="20" y="134" width="177" height="90" rx="4" class="learning-input"/>
-    <text x="108" y="167" text-anchor="middle">History h<tspan class="math-sub">t</tspan></text><text x="108" y="194" text-anchor="middle" class="learning-caption">RGB + Proprioception</text>
+    <text x="108" y="167" text-anchor="middle">History <tspan class="math-symbol">h<tspan class="math-sub">t</tspan></tspan></text><text x="108" y="194" text-anchor="middle" class="learning-caption">RGB + Proprioception</text>
     <path d="M202 179H230" class="learning-flow" marker-end="url(#learn-arrow)"/>
-    <rect x="244" y="149" width="153" height="60" rx="4" class="learning-module"/><text x="320" y="185" text-anchor="middle">State Encoder E</text>
+    <rect x="244" y="149" width="153" height="60" rx="4" class="learning-module"/><text x="320" y="185" text-anchor="middle">State Encoder <tspan class="math-symbol">E</tspan></text>
     <path d="M408 179H443" class="learning-flow" marker-end="url(#learn-arrow)"/>
-    <circle cx="474" cy="179" r="25" class="learning-state"/><text x="474" y="185" text-anchor="middle">z<tspan class="math-sub">t</tspan></text>
+    <circle cx="474" cy="179" r="25" class="learning-state"/><text x="474" y="185" text-anchor="middle"><tspan class="math-symbol">z<tspan class="math-sub">t</tspan></tspan></text>
     <path d="M510 179H542" class="learning-flow" marker-end="url(#learn-arrow)"/>
-    <rect x="556" y="149" width="143" height="60" rx="4" class="learning-module"/><text x="627" y="185" text-anchor="middle">Grounding G</text>
+    <rect x="556" y="149" width="143" height="60" rx="4" class="learning-module"/><text x="627" y="185" text-anchor="middle">Grounding <tspan class="math-symbol">G</tspan></text>
     <path d="M711 179H739" class="learning-flow" marker-end="url(#learn-arrow)"/>
-    <rect x="753" y="140" width="179" height="78" rx="4" class="learning-output"/><text x="842" y="170" text-anchor="middle">Goal Features ŷ</text><text x="842" y="195" text-anchor="middle" class="learning-caption">Coordinatewise Variance</text>
+    <rect x="753" y="140" width="179" height="78" rx="4" class="learning-output"/><text x="842" y="170" text-anchor="middle">Goal Features <tspan class="math-symbol">ŷ</tspan></text><text x="842" y="195" text-anchor="middle" class="learning-caption">Coordinatewise Variance</text>
     <path d="M842 233V261" class="learning-supervision" marker-end="url(#target-arrow)"/>
-    <rect x="753" y="276" width="179" height="55" rx="4" class="learning-target"/><text x="842" y="309" text-anchor="middle">Keypoint Targets y</text>
+    <rect x="753" y="276" width="179" height="55" rx="4" class="learning-target"/><text x="842" y="309" text-anchor="middle">Keypoint Targets <tspan class="math-symbol">y</tspan></text>
     <text x="25" y="303" class="learning-caption">3-Step Observation–Action History</text>
     <text x="25" y="332" class="learning-caption">Variance weights feature errors during training.</text>
   </g>
@@ -31,21 +31,21 @@
     <rect x="83" y="125" width="60" height="38" rx="3" class="sampled-window" id="sampled-window"/>
     <path d="M83 169V177H143V169" class="window-bracket" id="window-bracket"/>
     <rect x="25" y="184" width="237" height="30" rx="3" class="window-label-bg"/>
-    <text x="37" y="204" id="sampled-duration">Sampled Window · d = 2</text>
+    <text x="37" y="204" id="sampled-duration">Sampled Window · <tspan class="math-symbol">d</tspan> = 2</text>
     <path id="window-flow" d="M113 177V190H353V196" class="learning-flow" marker-end="url(#learn-arrow)"/>
-    <rect x="275" y="202" width="156" height="80" rx="4" class="learning-module"/><text x="353" y="248" text-anchor="middle">Skill Encoder Q</text>
+    <rect x="275" y="202" width="156" height="80" rx="4" class="learning-module"/><text x="353" y="248" text-anchor="middle">Skill Encoder <tspan class="math-symbol">Q</tspan></text>
     <path d="M443 242H463" class="learning-flow" marker-end="url(#learn-arrow)"/>
     <g class="learning-tokens"><rect x="477" y="226" width="29" height="32"/><rect x="514" y="226" width="29" height="32"/><rect x="551" y="226" width="29" height="32"/></g>
-    <text x="529" y="298" text-anchor="middle" class="learning-caption">Fixed-Length Skill Tokens u</text>
+    <text x="529" y="298" text-anchor="middle" class="learning-caption">Fixed-Length Skill Tokens <tspan class="math-symbol">u</tspan></text>
     <path d="M593 242H612" class="learning-flow" marker-end="url(#learn-arrow)"/>
-    <rect x="626" y="202" width="156" height="80" rx="4" class="learning-module"/><text x="704" y="248" text-anchor="middle">Skill Decoder D</text>
-    <circle cx="704" cy="122" r="24" class="learning-state"/><text x="704" y="128" text-anchor="middle">z<tspan class="math-sub">t</tspan></text><path d="M704 157V188" class="learning-flow conditioning-flow" marker-end="url(#learn-arrow)"/>
+    <rect x="626" y="202" width="156" height="80" rx="4" class="learning-module"/><text x="704" y="248" text-anchor="middle">Skill Decoder <tspan class="math-symbol">D</tspan></text>
+    <circle cx="704" cy="122" r="24" class="learning-state"/><text x="704" y="128" text-anchor="middle"><tspan class="math-symbol">z<tspan class="math-sub">t</tspan></tspan></text><path d="M704 157V188" class="learning-flow conditioning-flow" marker-end="url(#learn-arrow)"/>
     <path d="M794 242H806" class="learning-flow" marker-end="url(#learn-arrow)"/>
-    <rect x="818" y="201" width="117" height="82" rx="4" class="learning-output"/><text x="876" y="232" text-anchor="middle">Actions</text><text x="876" y="260" text-anchor="middle">Duration d</text>
+    <rect x="818" y="201" width="117" height="82" rx="4" class="learning-output"/><text x="876" y="232" text-anchor="middle">Actions</text><text x="876" y="260" text-anchor="middle">Duration <tspan class="math-symbol">d</tspan></text>
     <path d="M876 297V320" class="learning-supervision" marker-end="url(#target-arrow)"/>
     <text x="876" y="347" text-anchor="middle" class="learning-caption">Window Actions</text>
-    <text x="876" y="372" text-anchor="middle" class="learning-caption">Duration d</text>
-    <text x="25" y="364" class="learning-caption">The observations let Q encode what the actions achieved.</text>
+    <text x="876" y="372" text-anchor="middle" class="learning-caption">Duration <tspan class="math-symbol">d</tspan></text>
+    <text x="25" y="364" class="learning-caption">The observations let <tspan class="math-symbol">Q</tspan> encode what the actions achieved.</text>
   </g>
   <g class="learning-search-panel">
     <text x="24" y="32" class="learning-label">Proposal, Dynamics, and Value</text>
@@ -53,29 +53,29 @@
     <text x="25" y="112" class="learning-caption">Frozen</text>
     <g class="frozen-modules">
       <rect x="132" y="86" width="193" height="44" rx="4"/><rect x="334" y="86" width="193" height="44" rx="4"/><rect x="536" y="86" width="193" height="44" rx="4"/><rect x="738" y="86" width="193" height="44" rx="4"/>
-      <text x="228" y="113" text-anchor="middle">State Encoder E</text><text x="430" y="113" text-anchor="middle">Skill Encoder Q</text><text x="632" y="113" text-anchor="middle">Skill Decoder D</text><text x="834" y="113" text-anchor="middle">Grounding G</text>
+      <text x="228" y="113" text-anchor="middle">State Encoder <tspan class="math-symbol">E</tspan></text><text x="430" y="113" text-anchor="middle">Skill Encoder <tspan class="math-symbol">Q</tspan></text><text x="632" y="113" text-anchor="middle">Skill Decoder <tspan class="math-symbol">D</tspan></text><text x="834" y="113" text-anchor="middle">Grounding <tspan class="math-symbol">G</tspan></text>
     </g>
-    <text x="25" y="160" class="learning-label">Inputs</text><text x="296" y="160" class="learning-label">Learned Component</text><text x="584" y="160" class="learning-label">Training Target</text>
+
     <g class="proposal-training">
-      <text x="110" y="203" text-anchor="middle">State z</text>
+      <text x="110" y="203" text-anchor="middle">State <tspan class="math-symbol">z</tspan></text>
       <path d="M218 197H280" class="learning-flow" pathLength="1" marker-end="url(#learn-arrow)"/>
-      <rect x="296" y="170" width="193" height="55" rx="4" class="learning-module"/><text x="392" y="203" text-anchor="middle">Proposal P</text>
+      <rect x="296" y="170" width="193" height="55" rx="4" class="learning-module"/><text x="392" y="203" text-anchor="middle">Proposal <tspan class="math-symbol">P</tspan></text>
       <path d="M505 197H558" class="learning-flow" pathLength="1" marker-end="url(#learn-arrow)"/>
-      <text x="584" y="203">Q-Encoded Skills u</text>
+      <text x="584" y="203">Q-Encoded Skills <tspan class="math-symbol">u</tspan></text>
     </g>
     <g class="dynamics-training">
-      <text x="110" y="282" text-anchor="middle">State z, Skill u</text>
+      <text x="110" y="282" text-anchor="middle">State <tspan class="math-symbol">z</tspan>, Skill <tspan class="math-symbol">u</tspan></text>
       <path d="M218 276H280" class="learning-flow" pathLength="1" marker-end="url(#learn-arrow)"/>
-      <rect x="296" y="249" width="193" height="55" rx="4" class="learning-module"/><text x="392" y="282" text-anchor="middle">Dynamics F</text>
+      <rect x="296" y="249" width="193" height="55" rx="4" class="learning-module"/><text x="392" y="282" text-anchor="middle">Dynamics <tspan class="math-symbol">F</tspan></text>
       <path d="M505 276H558" class="learning-flow" pathLength="1" marker-end="url(#learn-arrow)"/>
-      <text x="584" y="282" aria-label="Encoded endpoints E of history h sub t plus d">Encoded Endpoints E(h<tspan class="math-sub">t+d</tspan>)</text>
+      <text x="584" y="282" aria-label="Encoded endpoints E of history h sub t plus d">Encoded Endpoints <tspan class="math-symbol">E</tspan>(<tspan class="math-symbol">h<tspan class="math-sub">t+d</tspan></tspan>)</text>
     </g>
     <g class="value-training">
-      <text x="110" y="361" text-anchor="middle" aria-label="State z, goal z sub g">State z, Goal z<tspan class="math-sub">g</tspan></text>
+      <text x="110" y="361" text-anchor="middle" aria-label="State z, goal z sub g">State <tspan class="math-symbol">z</tspan>, Goal <tspan class="math-symbol">z<tspan class="math-sub">g</tspan></tspan></text>
       <path d="M218 355H280" class="learning-flow" pathLength="1" marker-end="url(#learn-arrow)"/>
-      <rect x="296" y="328" width="193" height="55" rx="4" class="learning-module"/><text x="392" y="361" text-anchor="middle">Value V</text>
+      <rect x="296" y="328" width="193" height="55" rx="4" class="learning-module"/><text x="392" y="361" text-anchor="middle">Value <tspan class="math-symbol">V</tspan></text>
       <path d="M505 355H558" class="learning-flow" pathLength="1" marker-end="url(#learn-arrow)"/>
-      <text x="584" y="351">Negative Goal-Reaching Cost</text><text x="584" y="378" class="learning-caption">Duration-Aware, from Hindsight Goals</text>
+      <text x="584" y="351">Negative Goal-Reaching Cost</text>
     </g>
   </g>
 </svg>

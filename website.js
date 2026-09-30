@@ -2,6 +2,14 @@
 (() => {
   'use strict';
   const el = id => document.getElementById(id);
+  function symbolText(node, text) {
+    const svg = node.namespaceURI === 'http://www.w3.org/2000/svg';
+    node.replaceChildren(...text.split(/(\b[EQDGPFVzhugdyH]\b)/g).map(part => {
+      if (!/^[EQDGPFVzhugdyH]$/.test(part)) return document.createTextNode(part);
+      const span = svg ? document.createElementNS(node.namespaceURI, 'tspan') : document.createElement('span');
+      span.setAttribute('class', 'math-symbol'); span.textContent = part; return span;
+    }));
+  }
   const stageCopy = [
     'The state encoder encodes the latest observation–action history into a latent state. The goal supplies target object keypoints and encoded goal observations.',
     'Sample candidate skills from the proposal function P, conditioned on the current latent state.',
@@ -12,7 +20,7 @@
   function setStage(value) {
     stage = value;
     el('method-diagram').dataset.stage = String(stage);
-    el('method-copy').textContent = stageCopy[stage];
+    symbolText(el('method-copy'), stageCopy[stage]);
     document.querySelectorAll('button[data-stage]').forEach(button => button.setAttribute('aria-pressed', String(Number(button.dataset.stage) === stage)));
   }
   function stopExplanation() {
@@ -45,8 +53,8 @@
     el('sampled-window').dataset.duration = String(duration);
     el('window-bracket').setAttribute('d', `M${left} 169V177H${left+width}V169`);
     el('window-flow').setAttribute('d', `M${left+width/2} 177V190H353V196`);
-    el('sampled-duration').textContent = `Sampled Window · d = ${duration}`;
-    el('window-example').textContent = `Window Duration: d = ${duration}`;
+    symbolText(el('sampled-duration'), `Sampled Window · d = ${duration}`);
+    symbolText(el('window-example'), `Window Duration: d = ${duration}`);
     el('window-position').textContent = `Steps ${start+1}–${start+duration}`;
     if (!reducedMotion.matches) el('sampled-window').animate([{opacity:.35},{opacity:1}], {duration:350, easing:'ease-out'});
     document.querySelectorAll('.play-window-frames rect').forEach((rect, i) => {
@@ -79,7 +87,7 @@
     windowPlaying = value === 1 && !reducedMotion.matches;
     if (value === 1) setWindowExample(2, 2);
     syncWindowAnimation();
-    el('learning-copy').textContent = learningCopy[value];
+    symbolText(el('learning-copy'), learningCopy[value]);
     document.querySelectorAll('button[data-learning-stage]').forEach(button => button.setAttribute('aria-pressed', String(Number(button.dataset.learningStage) === value)));
   }
   function stopLearning() {
@@ -173,13 +181,13 @@
     // Saved execution paths: the remaining current skill and the next three.
     // Draw the current skill last so its color stays clear at intersections.
     const endIndex = Math.min(active + 4, recording.cycle_starts.length);
-    const order = Array.from({length:endIndex-active-1}, (_,i) => active+i+1);
+    const order = Array.from({length:endIndex-active-1}, (_,i) => endIndex-i-1);
     order.push(active);
     order.forEach(index => {
       const start = Math.max(frame, recording.cycle_starts[index]);
       const end = recording.cycle_starts[index+1] ?? recording.control_steps;
       if (end <= start) return;
-      context.globalAlpha = index === active ? 1 : .65;
+      context.globalAlpha = [1, .85, .5, .25][index-active];
       context.strokeStyle = durationColor(recording.skill_durations[index]);
       context.lineWidth = index === active ? 4 : 3;
       context.beginPath();
