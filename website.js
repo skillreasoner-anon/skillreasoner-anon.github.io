@@ -389,7 +389,7 @@
     if (demoLoaded) return;
     demoLoaded = true; el('load-demo').disabled = true; el('load-demo').textContent = 'Loading…';
     el('status').textContent = 'Loading the demo…';
-    const script = document.createElement('script'); script.src = 'demo/app.js?v=try-it-v10';
+    const script = document.createElement('script'); script.src = 'demo/app.js?v=try-it-v16';
     script.onerror = () => { demoLoaded = false; el('load-demo').disabled = false; el('load-demo').textContent = 'Retry Loading Demo'; el('status').textContent = 'Unable to load the demo. Please try again.'; };
     document.body.append(script);
   });

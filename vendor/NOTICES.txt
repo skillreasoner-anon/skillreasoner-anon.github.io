@@ -10,4 +10,5 @@ IBM Plex Sans (400, 600, 700), IBM Plex Serif Regular, and IBM Plex Mono Regular
 Pyodide runtime sources: https://github.com/pyodide/pyodide/tree/0.26.4
 Runtime binaries: https://cdn.jsdelivr.net/pyodide/v0.26.4/full/
 Pymunk WebAssembly binary: https://github.com/viblo/pymunk/releases/tag/6.11.1
-No changes were made to the distributed dependency binaries.
+No changes were made to the distributed simulator dependency binaries.
+IBM Plex Sans and Serif WOFF2 files are lossless webfont encodings of the retained TTF files; glyphs and metrics are unchanged.

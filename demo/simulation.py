@@ -1,4 +1,4 @@
-"""Browser teleoperation using retained V6.0 physics (800 Hz / 10 Hz control)."""
+"""Browser teleoperation using retained V6.0 physics (800 Hz; responsive browser control batches)."""
 import json, math
 from types import SimpleNamespace
 import pymunk
@@ -31,6 +31,8 @@ class Simulation:
     def __init__(self, task):
         self.task=task
         self.narrow_door_layout=SimpleNamespace(boundary_min=task['bounds'][0],boundary_max=task['bounds'][1])
+        self.cache_static_wall_projection=True
+        self._static_wall_projection_cache=None
         self.narrow_door_block_wall_projection_count=0
         self.narrow_door_block_wall_projection_max_depth=0.
         self.space=pymunk.Space();self.space.gravity=(0,0);self.space.damping=0.
@@ -62,6 +64,8 @@ class Simulation:
         self.goals=polygons(task['goal'])
     def step(self,target,steps=80):
         lo,hi=self.task['bounds']
+        if type(steps) is not int or not 1<=steps<=80:
+            raise ValueError('Invalid physics batch size')
         if len(target)!=2 or any(not math.isfinite(float(v)) or v<lo+15 or v>hi-15 for v in target):
             raise ValueError('Target outside executable workspace')
         self.target=list(target)
@@ -82,4 +86,7 @@ def reset_task(payload):
     sim=Simulation(task)
     return json.dumps(dict(sim.state(),start=task['start'],goal=task['goal'],seed=task['seed']))
 def advance(payload):
-    return json.dumps(sim.step(json.loads(payload)))
+    request=json.loads(payload)
+    if isinstance(request,list):
+        return json.dumps(sim.step(request))
+    return json.dumps(sim.step(request['target'],steps=request['steps']))
