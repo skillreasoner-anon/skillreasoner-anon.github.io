@@ -129,14 +129,12 @@
     const a = rgb(durationPalette[index]), b = rgb(durationPalette[index+1]);
     return `rgb(${a.map((v,i) => Math.round(v+(b[i]-v)*fraction)).join(', ')})`;
   }
-  let recordings = null, baselineRecordings = null, results = null, recording = null, pairedRecordings = null;
-  let selected = 'narrow_door', outcome = 'success', episodeIndex = 0, method = 'ours', compute = 'high', readout = 'full';
+  let recordings = null, baselineRecordings = null, results = null, recording = null;
+  let selected = 'narrow_door', outcome = 'success', episodeIndex = 0, method = 'ours', compute = 'high';
   let frame = 0, position = 0, playing = false, lastTimestamp = null, rolloutRAF = null;
   const episodeMemory = new Map();
-  const canvas = el('rollout-world'), ctx = canvas.getContext('2d'), video = el('baseline-video');
+  const canvas = el('rollout-world'), ctx = canvas.getContext('2d');
   const timeline = el('skill-timeline');
-  function pairedRecording() { return recording?.motion_type === 'object_only' && method !== 'ours' ? pairedRecordings?.[recording.episode_id] : null; }
-  function comparing() { return Boolean(pairedRecording()) && el('compare-ours').checked; }
   function polygon(context, pose, fill, stroke, dashed = false) {
     context.save(); context.translate(pose[0], pose[1]); context.rotate(pose[2]);
     context.beginPath(); blockShape.forEach(([x,y], index) => index ? context.lineTo(x,y) : context.moveTo(x,y)); context.closePath();
@@ -150,9 +148,9 @@
     polygon(context, data.goal, '#e0ebda', '#788e6c', true);
     if (drawPath) drawPath(context);
     context.fillStyle = '#89979d'; data.walls.forEach(wall => context.fillRect(wall.x-wall.width/2,wall.y-wall.height/2,wall.width,wall.height));
-    polygon(context, data.motion_type === 'object_only' ? state : state.slice(2), '#a9b7be', '#596f7b');
-    if (data.motion_type !== 'object_only') {
-      context.beginPath(); context.arc(state[0],state[1],15,0,Math.PI*2); context.fillStyle = '#c5a06c'; context.fill();
+    polygon(context, state.slice(2), '#a9b7be', '#596f7b');
+    {
+      context.beginPath(); context.arc(state[0],state[1],data.agent_radius ?? 15,0,Math.PI*2); context.fillStyle = '#c5a06c'; context.fill();
       context.strokeStyle = '#8e6c40'; context.lineWidth = 2; context.stroke();
     }
     context.restore();
@@ -160,14 +158,14 @@
   function methodLabel(id) {
     if (id === 'ours') return 'SkillReasoner (Ours)';
     const item = results.methods.find(row => row.id === id);
-    return `${item.label} · ${item.group === 'expert' ? 'Expert Demos' : 'Play Data'}`;
+    return `${item.label} · ${item.group === 'expert' ? 'Privileged Expert Demos' : 'Play Data'}`;
   }
   function episodeGroups() {
     return method === 'ours' ? recordings?.[selected] : baselineRecordings?.[method]?.[selected];
   }
   function memoryKey() { return `${selected}/${method}/${outcome}`; }
   function activeSkill() { return recording?.cycle_starts?.findLastIndex(start => start <= frame) ?? -1; }
-  function drawObjectPath(context, data, end, color = '#79848A') {
+  function drawPusherPath(context, data, end, color = '#79848A') {
     if (!el('show-path').checked) return;
     context.save(); context.strokeStyle = color; context.lineWidth = 3; context.globalAlpha = .7;
     context.beginPath();
@@ -179,8 +177,8 @@
   }
   function drawRecordedPath(context) {
     if (!el('show-path').checked) return;
-    if (recording.motion_type === 'object_only') {
-      drawObjectPath(context,recording,frame); return;
+    if (!recording.cycle_starts?.length) {
+      drawPusherPath(context,recording,frame); return;
     }
     const active = activeSkill();
     context.save(); context.lineCap = 'round'; context.lineJoin = 'round';
@@ -208,7 +206,6 @@
     if (!recording) return;
     frame = Math.max(0, Math.min(recording.control_steps, nextFrame));
     position = frame; lastTimestamp = null;
-    if (recording.motion_type === 'video') video.currentTime = frame/recording.control_hz;
     render();
   }
   function seekSkill(index) {
@@ -240,13 +237,8 @@
   }
   function render() {
     if (!recording) return;
-    if (recording.motion_type !== 'video') scene(ctx,canvas,recording,recording.states[frame],drawRecordedPath);
-    if (comparing()) {
-      const ours = pairedRecording(), oursFrame = Math.min(frame,ours.control_steps);
-      scene(el('paired-world').getContext('2d'),el('paired-world'),ours,ours.states[oursFrame], context => drawObjectPath(context,ours,oursFrame,'#CD8068'));
-      scene(el('paired-baseline-world').getContext('2d'),el('paired-baseline-world'),recording,recording.states[frame],drawRecordedPath);
-      el('paired-world').dataset.frame = String(oursFrame); el('paired-baseline-world').dataset.frame = String(frame);
-    }
+    scene(ctx,canvas,recording,recording.states[frame],drawRecordedPath);
+    canvas.dataset.frame = String(frame);
     el('rollout-step').textContent = `${frame} / ${recording.control_steps}`;
     el('rollout-time').textContent = `${(frame/recording.control_hz).toFixed(1)} s`;
     el('rollout-scrub').value = String(frame);
@@ -265,52 +257,8 @@
   }
   function stopRollout() {
     playing = false; lastTimestamp = null;
-    cancelAnimationFrame(rolloutRAF); rolloutRAF = null; video.pause();
+    cancelAnimationFrame(rolloutRAF); rolloutRAF = null;
     el('rollout-play').textContent = 'Play Rollout'; el('rollout-play').setAttribute('aria-pressed','false');
-  }
-  function buildGallery() {
-    const gallery = el('episode-gallery'); gallery.replaceChildren();
-    const episodes = episodeGroups()?.[outcome] ?? [];
-    el('gallery-count').textContent = `${episodes.length} Example${episodes.length === 1 ? '' : 's'}`;
-    el('snapshot-frame').disabled = !episodes.length || episodes[0].motion_type === 'video';
-    el('episode-gallery').hidden = episodes.length === 0;
-    el('episode-gallery').previousElementSibling.hidden = episodes.length === 0;
-    episodes.forEach((row,index) => {
-      const button = document.createElement('button'); button.type = 'button'; button.className = 'episode-card';
-      button.dataset.episode = String(index); button.dataset.recordingId = row.recording_id;
-      button.setAttribute('aria-pressed', String(index === episodeIndex));
-      button.setAttribute('aria-label', `Episode ${index+1}, ${(row.control_steps/row.control_hz).toFixed(1)} seconds, ${(row.final_overlap*100).toFixed(1)} percent final object–goal overlap`);
-      let preview;
-      if (row.motion_type === 'video') {
-        preview = document.createElement('img'); preview.src = row.poster; preview.alt = ''; preview.loading = 'lazy';
-      } else {
-        preview = document.createElement('canvas'); preview.width = 220; preview.height = 220;
-        preview.setAttribute('aria-hidden','true');
-        const mode = el('snapshot-frame').value;
-        const index = mode === 'end' ? row.control_steps : mode === 'middle' ? Math.floor(row.control_steps/2) : 0;
-        scene(preview.getContext('2d'), preview, row, row.states[index]);
-      }
-      const label = document.createElement('span'); label.className = 'episode-card-label';
-      const number = document.createElement('strong'); number.textContent = `Episode ${index+1}`;
-      const duration = document.createElement('span'); duration.textContent = `${(row.control_steps/row.control_hz).toFixed(1)} s`;
-      label.append(number,duration);
-      if (row.task_score !== undefined) {
-        const score = document.createElement('span'); score.className = 'episode-card-score';
-        score.textContent = `${(row.task_score*100).toFixed(1)}% Score`; label.append(score);
-      }
-      button.append(preview,label);
-      button.addEventListener('click', () => {
-        selectRecording(selected,outcome,index);
-        const media = el('execution-media').getBoundingClientRect();
-        if (media.top >= innerHeight || media.bottom <= 0) el('execution-media').scrollIntoView({block:'start', behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'});
-      });
-      button.addEventListener('keydown', event => {
-        const next = {ArrowLeft:index-1, ArrowRight:index+1, Home:0, End:episodes.length-1}[event.key];
-        if (next === undefined || next < 0 || next >= episodes.length) return;
-        event.preventDefault(); selectRecording(selected,outcome,next); gallery.children[next].focus();
-      });
-      gallery.append(button);
-    });
   }
   function selectRecording(key, nextOutcome = outcome, nextEpisode) {
     if (!recordings) return;
@@ -325,51 +273,35 @@
     if (recording) episodeMemory.set(memoryKey(), episodeIndex);
     el('rollout-episode').replaceChildren(...episodes.map((row,index) => {
       const option = document.createElement('option'); option.value = String(index);
-      option.textContent = `${index+1} of ${episodes.length} · ${(row.control_steps/row.control_hz).toFixed(1)} s`; return option;
+      option.textContent = `${index+1} of ${episodes.length}`; return option;
     }));
     el('rollout-episode').value = String(episodeIndex);
     el('episode-prev').disabled = !recording || episodeIndex === 0;
     el('episode-next').disabled = !recording || episodeIndex === episodes.length-1;
     ['rollout-play','rollout-restart','rollout-scrub','rollout-episode'].forEach(id => el(id).disabled = !recording);
     el('rollout-title').textContent = environmentNames[key];
-    canvas.hidden = !recording || recording.motion_type === 'video' || comparing();
-    video.hidden = recording?.motion_type !== 'video';
-    // Drop the old video source on every method/environment change, including a missing recording.
-    video.removeAttribute('src'); video.removeAttribute('poster'); video.load();
-    if (recording?.motion_type === 'video') { video.src = recording.video; video.poster = recording.poster; video.load(); }
+    el('selected-method-name').textContent = methodLabel(method);
+    canvas.hidden = !recording;
+    if (!recording) ctx.clearRect(0,0,canvas.width,canvas.height);
     el('recording-unavailable').hidden = Boolean(recording);
     el('execution-controls').hidden = !recording;
     el('skill-details').hidden = method !== 'ours';
-    el('compare-ours').parentElement.hidden = !pairedRecording();
-    el('paired-execution').hidden = !comparing();
-    el('episode-overlap').hidden = comparing();
-    if (pairedRecording()) {
-      el('paired-baseline-name').textContent = methodLabel(method);
-      el('paired-task-score').textContent = `${(pairedRecording().task_score*100).toFixed(1)}%`;
-      el('paired-baseline-score').textContent = `${(recording.task_score*100).toFixed(1)}%`;
-      el('paired-world').dataset.recordingId = pairedRecording().recording_id;
-      el('paired-baseline-world').dataset.recordingId = recording.recording_id;
-    }
-    el('show-path').parentElement.hidden = !recording || recording.motion_type === 'video';
-    el('path-label').textContent = recording?.motion_type === 'object_only' ? 'Recorded Object Path' : 'Recorded Pusher Path';
-    el('recording-scope').textContent = method === 'ours' ? 'Selected recorded example · separate cohort.'
-      : recording?.motion_type === 'object_only' ? (comparing() ? 'Same task · synchronized object motion · pusher poses unavailable.' : 'Recorded object motion · pusher poses unavailable.')
-      : recording?.motion_type === 'video' ? 'Matched-exposure replay · aggregate bars use terminal checkpoints.' : '';
+    el('show-path').parentElement.hidden = !recording;
     if (recording) {
-      el('rollout-identity').textContent = `${(recording.final_overlap*100).toFixed(1)}%`;
       el('rollout-scrub').max = String(recording.control_steps);
       el('episode-duration').textContent = `${(recording.control_steps/recording.control_hz).toFixed(1)} s`;
       canvas.setAttribute('aria-label', `${environmentNames[key]}: ${methodLabel(method)}, ${outcome}, episode ${episodeIndex+1} of ${episodes.length}`);
       canvas.dataset.recordingId = recording.recording_id;
-      video.dataset.recordingId = recording.recording_id;
-    } else { delete canvas.dataset.recordingId; delete video.dataset.recordingId; }
+    } else { delete canvas.dataset.recordingId; delete canvas.dataset.frame; }
     document.querySelectorAll('[data-outcome]').forEach(button => {
+      const count = groups?.[button.dataset.outcome]?.length ?? 0;
       button.setAttribute('aria-pressed', String(button.dataset.outcome === outcome && Boolean(recording)));
-      button.disabled = !groups?.[button.dataset.outcome]?.length;
+      button.disabled = count === 0;
+      button.textContent = `${button.dataset.outcome === 'success' ? 'Success' : 'Failure'} (${count})`;
     });
-    document.querySelectorAll('[data-rollout]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.rollout === key)));
+    document.querySelectorAll('[data-rollout]').forEach(button => { button.disabled=false; button.setAttribute('aria-pressed', String(button.dataset.rollout === key)); });
     el('recorded-method').value = method;
-    buildTimeline(); buildGallery(); render(); updateResults();
+    buildTimeline(); render(); updateResults();
   }
   function tick(timestamp) {
     rolloutRAF = null;
@@ -380,34 +312,17 @@
     if (next !== frame) { frame = next; render(); }
     if (frame === recording.control_steps) stopRollout(); else rolloutRAF = requestAnimationFrame(tick);
   }
-  video.addEventListener('timeupdate', () => {
-    if (recording?.motion_type !== 'video') return;
-    frame = Math.min(recording.control_steps, Math.floor(video.currentTime*recording.control_hz)); position = frame; render();
-  });
-  video.addEventListener('ended', stopRollout);
-  video.addEventListener('error', () => {
-    if (video.getAttribute('src')) {
-      stopRollout(); el('rollout-error').hidden = false; el('rollout-error').textContent = 'This recording could not load. Please try again.';
-    }
-  });
-  el('rollout-play').addEventListener('click', async () => {
+  el('rollout-play').addEventListener('click', () => {
     if (!recording) return;
     if (playing) { stopRollout(); return; }
     if (frame === recording.control_steps) seekFrame(0);
     playing = true; lastTimestamp = null;
     el('rollout-play').textContent = 'Pause Rollout'; el('rollout-play').setAttribute('aria-pressed','true');
-    if (recording.motion_type === 'video') {
-      const target = recording;
-      try { await video.play(); } catch (error) {
-        if (recording === target && error.name !== 'AbortError') {
-          stopRollout(); el('rollout-error').hidden = false; el('rollout-error').textContent = 'Playback could not start. Please try again.';
-        }
-      }
-    } else rolloutRAF = requestAnimationFrame(tick);
+    rolloutRAF = requestAnimationFrame(tick);
   });
   el('rollout-restart').addEventListener('click', () => selectRecording(selected,outcome,episodeIndex));
   el('rollout-scrub').addEventListener('input', event => seekFrame(Number(event.target.value)));
-  document.querySelectorAll('[data-rollout]').forEach(button => button.addEventListener('click', () => { readout='full'; selectRecording(button.dataset.rollout); }));
+  document.querySelectorAll('[data-rollout]').forEach(button => button.addEventListener('click', () => { selectRecording(button.dataset.rollout); }));
   document.querySelectorAll('[data-outcome]').forEach(button => button.addEventListener('click', () => selectRecording(selected, button.dataset.outcome)));
   el('rollout-episode').addEventListener('change', event => selectRecording(selected,outcome,Number(event.target.value)));
   el('episode-prev').addEventListener('click', () => selectRecording(selected,outcome,episodeIndex-1));
@@ -415,16 +330,8 @@
   el('skill-prev').addEventListener('click', () => seekSkill(activeSkill()-1));
   el('skill-next').addEventListener('click', () => seekSkill(activeSkill()+1));
   el('show-path').addEventListener('change', () => { if (recording) render(); });
-  el('compare-ours').addEventListener('change', () => {
-    el('paired-execution').hidden = !comparing();
-    el('episode-overlap').hidden = comparing(); canvas.hidden = comparing();
-    el('recording-scope').textContent = comparing() ? 'Same task · synchronized object motion · pusher poses unavailable.' : 'Recorded object motion · pusher poses unavailable.';
-    render();
-  });
-  el('snapshot-frame').addEventListener('change', buildGallery);
   el('return-ours').addEventListener('click', () => { method='ours'; selectRecording(selected); });
   el('recorded-method').addEventListener('change', event => { method=event.target.value; selectRecording(selected); });
-  el('result-readout').addEventListener('change', event => { readout=event.target.value; updateResults(); });
   function buildResults() {
     el('recorded-method').replaceChildren(...['ours',...results.methods.filter(m=>m.group !== 'ours').map(m=>m.id)].map(id => {
       const option = document.createElement('option'); option.value = id; option.textContent = methodLabel(id); return option;
@@ -458,33 +365,23 @@
   }
   function updateResults() {
     if (!results) return;
-    const env = results.environments[selected];
-    if (!env[readout]) readout='full';
-    const options = Object.entries(env).sort(([a],[b]) => a === 'full' ? -1 : b === 'full' ? 1 : a.localeCompare(b)).map(([key,row]) => {
-      const option=document.createElement('option'); option.value=key; option.textContent=row.label; return option;
-    });
-    el('result-readout').replaceChildren(...options); el('result-readout').value=readout;
-    el('result-readout').disabled = options.length === 1;
-    const row = env[readout], ours = row.scores[`ours_${compute}`];
-    el('aggregate-score').textContent = `${ours.toFixed(2)}%`;
-    el('compute-label').textContent = compute[0].toUpperCase()+compute.slice(1);
+    const row = results.environments[selected].full;
+    const selectedId = method === 'ours' ? `ours_${compute}` : method;
+    const score = row.scores[selectedId];
+    const selectedRow = results.methods.find(item => item.id === selectedId);
+    el('aggregate-score').textContent = `${score.toFixed(2)}%`;
+    el('score-method-name').textContent = method === 'ours' ? selectedRow.label : methodLabel(method);
     el('result-metric').textContent = row.metric;
-    el('result-cohort').textContent = `${row.tasks} Tasks · ${row.label} · Paper, Table 1`;
+    el('result-cohort').textContent = 'Paper, Table 1';
     document.querySelectorAll('.score-row').forEach(button => {
       const value=row.scores[button.dataset.method], id=button.dataset.method;
       button.querySelector('.bar-value').textContent = `${value.toFixed(2)}%`;
       button.querySelector('.bar-fill').style.width = `${value}%`;
       button.dataset.score=String(value);
       const item=results.methods.find(m=>m.id === id);
-      const available = item.group === 'ours' || Boolean(baselineRecordings[id]?.[selected]);
-      button.setAttribute('aria-pressed', String(method === 'ours' ? id === `ours_${compute}` : method === id));
-      button.setAttribute('aria-label', `${item.label}, ${item.group === 'expert' ? 'privileged expert demos' : item.group === 'play' ? 'play data baseline' : 'ours'}, ${value.toFixed(2)} percent ${row.metric.toLowerCase()}. ${available ? 'View recorded examples.' : 'Episode recording unavailable.'}`);
+      button.setAttribute('aria-pressed', String(id === selectedId));
+      button.setAttribute('aria-label', `${item.label}, ${item.group === 'expert' ? 'privileged expert demos' : item.group === 'play' ? 'play data baseline' : 'ours'}, ${value.toFixed(2)} percent normalized task score. View episodes.`);
     });
-    const best = group => Math.max(...results.methods.filter(m=>m.group === group).map(m=>row.scores[m.id]));
-    el('score-comparison').textContent = `${(ours-best('play')).toFixed(2)} percentage points above the best play-data baseline; ${(ours-best('expert')).toFixed(2)} above the best expert-demo baseline.`;
-    el('metric-definition').textContent = row.metric === 'Normalized Task Score'
-      ? 'Normalized task score assigns 50% to final object–goal overlap and 50% to normalized reduction in remaining nominal-route distance.'
-      : 'The one- and two-crossing Winding Maze readouts report maximum passage-clearance progress on the same 100 end-to-end trials.';
     el('rollout-error').hidden = true;
   }
   let demoLoaded = false;
@@ -517,13 +414,13 @@
   }
   async function loadRecordings() {
     try {
-      const paths = ['assets/rollouts.json', 'assets/results.json', 'assets/baseline-rollouts.json', 'assets/paired-rollouts.json'];
+      const paths = ['assets/rollouts.json', 'assets/results.json', 'assets/baseline-rollouts.json'];
       const data = await Promise.all(paths.map(async path => {
         const response = await fetch(path);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response.json();
       }));
-      [recordings, results, baselineRecordings, pairedRecordings] = data;
+      [recordings, results, baselineRecordings] = data;
       buildResults(); selectRecording(selected);
       // Preview the interactive task without downloading its 27 MB runtime.
       scene(el('world').getContext('2d'),el('world'),recordings.narrow_door.success[0],recordings.narrow_door.success[0].states[0]);
