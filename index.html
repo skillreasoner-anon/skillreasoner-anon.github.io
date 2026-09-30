@@ -9,7 +9,7 @@
 <body>
 <a class="skip-link" href="#overview">Skip to content</a>
 
-<header id="top" class="paper-header"><p class="eyebrow">ICLR 2027 · Anonymous Submission</p><h1>Latent Skill Acquisition and Composition<br class="desktop-break"> for Contact-Rich Manipulation</h1><nav class="page-nav" aria-label="Page sections"><div class="nav-inner"><a class="wordmark" href="#top">SkillReasoner</a><div class="nav-links"><a href="#learning">Learning</a><a href="#method">Inference</a><a href="#rollouts">Rollouts</a><a href="#real-world">Real World</a><a href="#try-it">Try It Yourself</a></div></div></nav></header>
+<header id="top" class="paper-header"><p class="eyebrow">ICLR 2027 · Anonymous Submission</p><h1>Latent Skill Acquisition and Composition<br class="desktop-break"> for Contact-Rich Manipulation</h1><nav class="page-nav" aria-label="Page sections"><div class="nav-inner"><a class="wordmark" href="#top">SkillReasoner</a><div class="nav-links"><a href="#learning">Learning</a><a href="#method">Inference</a><a href="#rollouts">Results</a><a href="#real-world">Real World</a><a href="#try-it">Try It Yourself</a></div></div></nav></header>
 <main>
 <section id="overview">
 <div class="section-heading"><h2>Abstract</h2></div>
@@ -59,27 +59,49 @@
 </section>
 
 <section id="rollouts">
-  <div class="section-heading"><h2>Long-Horizon Skill Composition</h2></div>
+  <div class="section-heading"><h2>Results in Simulation</h2></div>
   <p>We extend Push-T to goal-conditioned, maze-like layouts. A circular pusher maneuvers a T-shaped object through narrow passages to a target pose.</p>
   <div class="recording-controls">
-    <fieldset><legend>Environment</legend><div class="rollout-tabs"><button data-rollout="narrow_door" aria-pressed="false">Narrow Passage</button><button data-rollout="multi_room" aria-pressed="true">Multi-Room</button><button data-rollout="three_door" aria-pressed="false">Winding Maze</button></div></fieldset>
+    <fieldset><legend>Environment</legend><div class="rollout-tabs"><button data-rollout="narrow_door" aria-pressed="true">Narrow Passage</button><button data-rollout="multi_room" aria-pressed="false">Multi-Room</button><button data-rollout="three_door" aria-pressed="false">Winding Maze</button></div></fieldset>
+    <div class="method-control"><label for="recorded-method">Recorded Method<select id="recorded-method" disabled><option value="ours">SkillReasoner (Ours)</option></select></label></div>
     <fieldset><legend>Outcome</legend><div class="outcome-tabs"><button data-outcome="success" aria-pressed="true">Success</button><button data-outcome="failure" aria-pressed="false">Failure</button></div></fieldset>
-    <div class="episode-control"><label for="rollout-episode">Episode</label><div class="episode-picker"><button id="episode-prev" aria-label="Previous episode" disabled>←</button><select id="rollout-episode" disabled><option>Loading…</option></select><button id="episode-next" aria-label="Next episode" disabled>→</button></div></div>
   </div>
-  <figure class="rollout-figure">
-    <div class="rollout-grid">
-      <div class="rollout-scene"><canvas id="rollout-world" width="768" height="768" aria-label="Recorded rollout rendered from saved pusher and block poses">Enable JavaScript to explore recorded states.</canvas><div class="playback"><button id="rollout-play" disabled aria-pressed="false">Play Rollout</button><button id="rollout-restart" disabled>Restart</button><span class="playback-speed">1× Speed</span><output id="rollout-time">0.0 s</output></div><label class="path-toggle"><input id="show-path" type="checkbox" checked>Recorded Pusher Path</label></div>
-      <div class="rollout-notes">
-        <h3 id="rollout-title">Multi-Room</h3>
-        <div class="duration-legend"><span>Selected Skill Duration (Actions)</span><div class="duration-spectrum" aria-hidden="true"></div><div class="duration-scale"><span>1</span><span>10</span><span>20</span></div></div>
-        <div class="current-skill"><div class="skill-heading"><span id="skill-swatch" aria-hidden="true"></span><strong>Skill <output id="rollout-skill">—</output></strong></div><p id="skill-duration">—</p><p id="skill-progress" class="small-label">—</p><div class="skill-navigation"><button id="skill-prev" disabled>← Previous Skill</button><button id="skill-next" disabled>Next Skill →</button></div></div>
-        <dl class="rollout-stats"><div><dt>Control Step</dt><dd id="rollout-step">—</dd></div></dl><p class="annotation" id="rollout-identity"></p>
-      </div>
+  <div class="episode-gallery-heading"><h3>Choose an Episode</h3><output id="gallery-count" aria-live="polite">10 Examples</output><label for="snapshot-frame">Snapshot<select id="snapshot-frame" disabled><option value="start">Initial State</option><option value="middle">Midpoint</option><option value="end">Final State</option></select></label></div>
+  <div id="episode-gallery" class="episode-gallery" role="group" aria-label="Episode snapshots"></div>
+  <div class="results-layout">
+    <div class="execution-panel">
+      <div class="viewer-heading"><h3 id="rollout-title">Narrow Passage</h3><div class="episode-control"><label for="rollout-episode">Episode</label><div class="episode-picker"><button id="episode-prev" aria-label="Previous episode" disabled>←</button><select id="rollout-episode" disabled><option>Loading…</option></select><button id="episode-next" aria-label="Next episode" disabled>→</button></div></div></div>
+
+      <figure class="rollout-figure">
+        <div id="execution-media">
+          <label class="compare-toggle" hidden><input id="compare-ours" type="checkbox" checked>Compare with SkillReasoner · Same Start and Goal</label>
+          <div id="paired-execution" hidden><figure><figcaption>SkillReasoner · High</figcaption><canvas id="paired-world" width="768" height="768" aria-label="SkillReasoner saved object motion on the same task"></canvas><p>Episode Task Score <strong id="paired-task-score">—</strong></p></figure><figure><figcaption id="paired-baseline-name">Baseline</figcaption><canvas id="paired-baseline-world" width="768" height="768" aria-label="Baseline saved object motion on the same task"></canvas><p>Episode Task Score <strong id="paired-baseline-score">—</strong></p></figure></div>
+          <canvas id="rollout-world" width="768" height="768" aria-label="Recorded rollout rendered from saved pusher and block poses">Enable JavaScript to explore recorded states.</canvas>
+          <video id="baseline-video" playsinline muted preload="none" hidden aria-label="Recorded baseline evaluation"></video>
+          <div id="recording-unavailable" class="recording-unavailable" hidden role="status"><p>No saved episode recording is available for this method in this environment.</p><button id="return-ours">View SkillReasoner Episodes</button></div>
+        </div>
+        <div id="execution-controls"><div class="playback"><button id="rollout-play" disabled aria-pressed="false">Play Rollout</button><button id="rollout-restart" disabled>Restart</button><span class="playback-speed">1× Speed</span><output id="rollout-time">0.0 s</output></div>
+          <div class="episode-match" id="episode-overlap"><span>Final Object–Goal Overlap</span><strong id="rollout-identity">—</strong></div>
+          <p id="recording-scope" class="annotation"></p>
+          <label class="path-toggle"><input id="show-path" type="checkbox" checked><span id="path-label">Recorded Pusher Path</span></label>
+          <label class="scrub-label" for="rollout-scrub">Recorded Execution <output id="rollout-step">—</output></label><input id="rollout-scrub" type="range" min="0" max="206" value="0" disabled>
+          <div id="skill-details"><div class="skill-summary"><div><div class="skill-heading"><span id="skill-swatch" aria-hidden="true"></span><strong>Skill <output id="rollout-skill">—</output></strong></div><p id="skill-duration">—</p><p id="skill-progress" class="small-label">—</p></div><div class="duration-legend"><span>Selected Duration (Actions)</span><div class="duration-spectrum" aria-hidden="true"></div><div class="duration-scale"><span>1</span><span>10</span><span>20</span></div></div></div>
+            <div class="skill-navigation"><button id="skill-prev" disabled>← Previous Skill</button><button id="skill-next" disabled>Next Skill →</button></div>
+            <div class="timeline-heading"><span>Executed Skill Durations</span><span>Select a Skill</span></div><div class="timeline-wrap"><div id="skill-timeline" role="group" aria-label="Executed skills; arrow keys move between skills"></div><div id="timeline-cursor" aria-hidden="true"></div></div><div class="timeline-time"><span>0 s</span><span id="episode-duration">—</span></div>
+          </div>
+        </div>
+        <p id="rollout-error" class="error" hidden role="alert"></p>
+      </figure>
     </div>
-    <label class="scrub-label" for="rollout-scrub">Recorded Execution</label><input id="rollout-scrub" type="range" min="0" max="206" value="0" disabled>
-    <div class="timeline-heading"><span>Executed Skill Durations</span><span>Select a Skill</span></div><div class="timeline-wrap"><div id="skill-timeline" role="group" aria-label="Executed skills; arrow keys move between skills"></div><div id="timeline-cursor" aria-hidden="true"></div></div><div class="timeline-time"><span>0 s</span><span id="episode-duration">—</span></div>
-    <p id="rollout-error" class="error" hidden role="alert"></p>
-  </figure>
+    <aside class="results-panel" aria-label="Aggregate performance comparison">
+      <div class="result-controls"><label for="result-readout">Task Readout<select id="result-readout" disabled><option value="full">Full Task</option></select></label></div>
+      <div class="score-headline"><span>SkillReasoner · <output id="compute-label">High</output></span><strong id="aggregate-score">—</strong><h3 id="result-metric">Normalized Task Score</h3><p id="result-cohort" class="annotation">Paper, Table 1</p></div>
+      <div id="result-chart" role="group" aria-label="Method scores; select a method to view recordings"></div>
+      <p id="score-comparison" class="score-comparison" aria-live="polite"></p>
+      <p class="annotation chart-instruction">Select a method above to view its recordings.</p>
+    </aside>
+  </div>
+  <div class="results-definition"><p id="metric-definition">Normalized task score assigns 50% to final object–goal overlap and 50% to normalized reduction in remaining nominal-route distance.</p><details><summary>Evaluation and Recording Details</summary><p>Paper, Table 1. The shared final-task cohort contains 100 reset–goal tasks per domain (50 per Multi-Room stratum); the play-data π₀.₅ entries use separate checkpoint/cohort readouts. Winding Maze crossing readouts measure maximum passage-clearance progress on the same 100 end-to-end trials. Success requires 95% object–goal overlap; trials end after at most 720 control steps. Privileged behavior cloning baselines use 50 expert demonstrations from the test task distributions.</p><p>The standalone SkillReasoner gallery contains selected examples from a separate recorded cohort with varying planning configurations, independent of the Low/Medium/High aggregate settings. Winding Maze comparisons use the same recorded start and goal, the High planner setting (one seed), and synchronized 1× playback. Both panels show saved object motion; pusher poses were not recorded. Each stops at its own final state. Narrow Passage baseline videos are authenticated matched-exposure replays, distinct from the terminal checkpoints summarized above. Aggregate scores summarize the evaluation cohorts, not the selected examples.</p></details></div>
 </section>
 
 <section id="real-world"><div class="section-heading"><h2>Real-World Contact-Rich Manipulation</h2></div><p>Recorded play with top-contact sliding and side-contact pushing.</p><div class="video-pair"><figure><video controls playsinline muted preload="none" poster="assets/top-contact.jpg" aria-label="Recorded play: top-contact sliding"><source src="assets/top-contact.mp4" type="video/mp4"></video><figcaption><strong>Top-Contact Sliding.</strong> Recorded play · 1×.</figcaption></figure><figure><video controls playsinline muted preload="none" poster="assets/side-contact.jpg" aria-label="Recorded play: side-contact pushing"><source src="assets/side-contact.mp4" type="video/mp4"></video><figcaption><strong>Side-Contact Pushing.</strong> Recorded play · 1×.</figcaption></figure></div></section>
