@@ -34,15 +34,39 @@
     'Freeze E, Q, D, and G, then learn the proposal, dynamics, and value on the resulting latent states and skills.',
     'Proposal P learns to sample Q-encoded skills from state z. Dynamics F predicts their encoded endpoints. Value V learns negative, duration-aware goal-reaching cost from hindsight goals.'
   ];
-  let learningStage = 0, learningTimer = null;
+  const windowDurations = [2, 5, 7];
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let learningStage = 0, learningTimer = null, windowTimer = null, windowExample = 0;
+  function setWindowExample(index) {
+    windowExample = index;
+    const duration = windowDurations[index];
+    el('sampled-window').setAttribute('width', String(34 * duration));
+    el('window-bracket').setAttribute('d', `M23 169V177H${23 + 34 * duration}V169`);
+    el('sampled-duration').textContent = `Sampled window · d = ${duration}`;
+    el('window-example').textContent = `Illustrative window: d = ${duration}`;
+    document.querySelectorAll('.play-window-frames rect').forEach((rect, i) => { rect.dataset.sampled = String(i < duration); });
+  }
+  function syncWindowAnimation() {
+    clearInterval(windowTimer); windowTimer = null;
+    if (learningStage === 1 && learningTimer && !reducedMotion.matches) {
+      windowTimer = setInterval(() => setWindowExample((windowExample + 1) % windowDurations.length), 2000);
+    }
+  }
+  reducedMotion.addEventListener('change', syncWindowAnimation);
   function setLearningStage(value) {
     learningStage = value;
     el('learning-diagram').dataset.learningStage = String(value);
+    el('learning-layout').dataset.learningStage = String(value);
+    el('window-explanation').hidden = value !== 1;
+    el('learning-copy').parentElement.hidden = value === 1;
+    if (value === 1) setWindowExample(0);
+    syncWindowAnimation();
     el('learning-copy').textContent = learningCopy[value];
     document.querySelectorAll('button[data-learning-stage]').forEach(button => button.setAttribute('aria-pressed', String(Number(button.dataset.learningStage) === value)));
   }
   function stopLearning() {
     clearInterval(learningTimer); learningTimer = null;
+    clearInterval(windowTimer); windowTimer = null;
     el('learning-play').textContent = 'Play explanation';
     el('learning-play').setAttribute('aria-pressed', 'false');
   }
@@ -54,6 +78,10 @@
     el('learning-play').textContent = 'Pause explanation';
     el('learning-play').setAttribute('aria-pressed', 'true');
     learningTimer = setInterval(() => setLearningStage((learningStage + 1) % 4), 7000);
+    syncWindowAnimation();
+  });
+  el('next-window').addEventListener('click', () => {
+    stopLearning(); setWindowExample((windowExample + 1) % windowDurations.length);
   });
   async function loadLearningDiagram() {
     try {
@@ -63,7 +91,7 @@
       if (doc.querySelector('parsererror')) throw new Error('Invalid learning diagram');
       el('learning-visual').replaceChildren(document.importNode(doc.documentElement, true));
       setLearningStage(0);
-      document.querySelectorAll('button[data-learning-stage], #learning-play').forEach(button => button.disabled = false);
+      document.querySelectorAll('button[data-learning-stage], #learning-play, #next-window').forEach(button => button.disabled = false);
     } catch (error) {
       el('learning-visual').textContent = 'The learning illustration could not load. Please reload the page.';
     }

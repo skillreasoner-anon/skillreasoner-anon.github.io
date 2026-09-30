@@ -26,24 +26,26 @@
   <g class="learning-skill-panel">
     <text x="24" y="32" class="learning-label">STATE AND SKILL REPRESENTATIONS</text>
     <text x="24" y="72" class="learning-subtitle">Latent skills through observation-conditioned action reconstruction</text>
-    <text x="25" y="115" class="learning-caption">Offline play trajectory</text>
+    <text x="25" y="115" class="learning-caption">Offline play: observations + actions</text>
     <g class="play-window-frames">
       <rect x="25" y="129" width="28" height="30"/><rect x="59" y="129" width="28" height="30"/><rect x="93" y="129" width="28" height="30"/><rect x="127" y="129" width="28" height="30"/><rect x="161" y="129" width="28" height="30"/><rect x="195" y="129" width="28" height="30"/><rect x="229" y="129" width="28" height="30"/>
     </g>
-    <rect x="23" y="126" width="170" height="36" rx="2" class="sampled-window"/>
-    <text x="25" y="198" class="learning-caption">Sample d uniformly from 1,…,H</text>
+    <rect x="23" y="126" width="68" height="36" rx="2" class="sampled-window" id="sampled-window"/>
+    <path d="M23 169V177H91V169" class="window-bracket" id="window-bracket"/>
+    <text x="25" y="198" class="learning-caption" id="sampled-duration">Sampled window · d = 2</text>
     <path d="M142 217V242H269" class="learning-flow" marker-end="url(#learn-arrow)"/>
     <rect x="283" y="210" width="140" height="64" rx="4" class="learning-module"/><text x="353" y="248" text-anchor="middle">Skill encoder Q</text>
     <path d="M436 242H463" class="learning-flow" marker-end="url(#learn-arrow)"/>
     <g class="learning-tokens"><rect x="477" y="226" width="29" height="32"/><rect x="514" y="226" width="29" height="32"/><rect x="551" y="226" width="29" height="32"/></g>
-    <text x="529" y="298" text-anchor="middle" class="learning-caption">Discrete tokens u</text>
+    <text x="529" y="298" text-anchor="middle" class="learning-caption">Fixed-length tokens u</text>
     <path d="M593 242H623" class="learning-flow" marker-end="url(#learn-arrow)"/>
     <rect x="637" y="210" width="135" height="64" rx="4" class="learning-module"/><text x="704" y="248" text-anchor="middle">Decoder D</text>
     <circle cx="704" cy="122" r="24" class="learning-state"/><text x="704" y="128" text-anchor="middle">zₜ</text><path d="M704 157V195" class="learning-flow conditioning-flow" marker-end="url(#learn-arrow)"/>
     <path d="M784 242H804" class="learning-flow" marker-end="url(#learn-arrow)"/>
     <rect x="818" y="201" width="117" height="82" rx="4" class="learning-output"/><text x="876" y="232" text-anchor="middle">Actions</text><text x="876" y="260" text-anchor="middle">Duration d</text>
     <path d="M876 297V320" class="learning-supervision" marker-end="url(#target-arrow)"/>
-    <text x="876" y="347" text-anchor="middle" class="learning-caption">Window targets</text>
+    <text x="876" y="347" text-anchor="middle" class="learning-caption">Window actions</text>
+    <text x="876" y="372" text-anchor="middle" class="learning-caption">Duration d</text>
     <text x="25" y="364" class="learning-caption">The observations let Q encode what the actions achieved.</text>
   </g>
   <g class="learning-frozen-panel">

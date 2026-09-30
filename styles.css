@@ -29,10 +29,8 @@ button,select{font:inherit;font-size:16px;line-height:1.4;color:inherit;min-heig
 .frozen-modules rect{fill:#f0f2f1;stroke:#879a90;stroke-dasharray:5 3}
 .learning-state-panel,.learning-skill-panel,.learning-frozen-panel,.learning-search-panel{display:none}
 #learning-diagram[data-learning-stage="0"] .learning-state-panel,#learning-diagram[data-learning-stage="1"] .learning-skill-panel,#learning-diagram[data-learning-stage="2"] .learning-frozen-panel,#learning-diagram[data-learning-stage="3"] .learning-search-panel{display:block;animation:learning-reveal .4s ease-out}
-#learning-diagram[data-learning-stage="1"] .sampled-window{animation:window-duration 4s ease-in-out infinite}
 #learning-diagram[data-learning-stage="3"] .learning-flow{stroke-dasharray:1;animation:draw-branch 1.1s ease-out both}
 @keyframes learning-reveal{from{opacity:.3}to{opacity:1}}
-@keyframes window-duration{0%,100%{width:68px}40%{width:170px}70%{width:238px}}
 .learning-figure .figure-topline{align-items:flex-start}
 .learning-figure .small-label{max-width:70%;line-height:1.6}
 .illustration-loading{padding:60px 20px;color:var(--muted)}
@@ -43,3 +41,15 @@ button,select{font:inherit;font-size:16px;line-height:1.4;color:inherit;min-heig
 #method-diagram{display:block;width:100%;margin-top:22px;font:18px "IBM Plex Sans",sans-serif}
 @media(max-width:700px){#method-diagram,#learning-diagram{min-width:840px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.observe-layer,.propose-layer,.select-layer,.execute-layer{transition:none}#method-diagram .branch,#method-diagram .selected-branch,#method-diagram .action-ticks rect,#learning-diagram g,#learning-diagram .sampled-window,#learning-diagram .learning-flow{animation:none!important}}
+
+/* The sampled window and its explanation stay together. */
+#learning-layout[data-learning-stage="1"]{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:24px;align-items:start}
+#learning-visual{min-width:0}
+#window-explanation{margin-top:24px;padding-left:20px;border-left:1px solid var(--line);font-size:16px;line-height:1.6}
+.window-notes{margin:0}.window-notes dt{font-weight:600;margin:0 0 5px}.window-notes dd{margin:0 0 16px}
+.window-key{display:inline-block;width:14px;height:14px;background:#c2a57030;border:2px solid var(--ochre);vertical-align:-1px;margin-right:7px}
+.window-example-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.window-example-controls output{font-variant-numeric:tabular-nums}.window-example-controls button{font-size:16px}
+.window-definition{font-size:15px;color:var(--muted);margin:12px 0 0;line-height:1.6}
+.window-bracket{fill:none;stroke:var(--ochre);stroke-width:1.5}
+.play-window-frames rect[data-sampled="false"]{opacity:.3}
+@media(max-width:1000px){#learning-layout[data-learning-stage="1"]{grid-template-columns:1fr;gap:0}#window-explanation{order:-1;margin-top:20px;padding-left:16px}.window-notes dd{margin-bottom:12px}}

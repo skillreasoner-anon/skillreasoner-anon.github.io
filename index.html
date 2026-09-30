@@ -27,7 +27,21 @@
       <button data-learning-stage="2" aria-pressed="false" disabled>3 · Freeze representations</button>
       <button data-learning-stage="3" aria-pressed="false" disabled>4 · Proposal, dynamics, value</button>
     </div>
-    <div id="learning-visual" class="diagram-scroll" tabindex="0" role="region" aria-label="Learning diagram; scroll horizontally on small screens"><p class="illustration-loading">Loading illustration…</p></div>
+    <div id="learning-layout" data-learning-stage="0">
+      <div id="learning-visual" class="diagram-scroll" tabindex="0" role="region" aria-label="Learning diagram; scroll horizontally on small screens"><p class="illustration-loading">Loading illustration…</p></div>
+      <aside id="window-explanation" aria-label="Action reconstruction explanation" hidden>
+        <dl class="window-notes">
+          <dt><span class="window-key" aria-hidden="true"></span>Sample interaction windows</dt>
+          <dd>The highlight marks one interaction window. Sample its duration d uniformly from 1,…,H.</dd>
+          <dt>Skill encoder Q</dt>
+          <dd>Compresses each window into a fixed-length sequence of discrete tokens u.</dd>
+          <dt>Skill decoder D(zₜ,u)</dt>
+          <dd>Reconstructs its actions and predicts the duration used to terminate the skill.</dd>
+        </dl>
+        <div class="window-example-controls"><output id="window-example" aria-live="polite">Illustrative window: d = 2</output><button id="next-window" disabled>Next example</button></div>
+        <p class="window-definition">d: sampled duration. H: maximum window duration.</p>
+      </aside>
+    </div>
     <p class="diagram-scroll-hint">Scroll the diagram horizontally to inspect each stage.</p>
     <div class="step-copy"><p id="learning-copy" aria-live="polite">The state encoder E encodes a 3-step observation–action history into latent state z. State grounding G predicts goal features (keypoints) and coordinatewise variance, which weights feature errors during training.</p></div>
     <figcaption>Schematic illustration of the training objectives.</figcaption>
