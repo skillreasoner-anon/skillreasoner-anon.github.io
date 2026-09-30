@@ -6,7 +6,7 @@ const loaded=(async()=>{
   await py.loadPackage(['cffi','numpy']);
   const wheel=await (await fetch('../vendor/pyodide/pymunk.whl')).arrayBuffer();
   py.unpackArchive(new Uint8Array(wheel),'zip',{extractDir:'/lib/python3.12/site-packages'});
-  for (const name of ['physics.py','simulation.py']) py.FS.writeFile('/home/pyodide/'+name,await (await fetch(name+'?v=v60-1')).text());
+  for (const name of ['physics.py','simulation.py','sampling.py']) py.FS.writeFile('/home/pyodide/'+name,await (await fetch(name+'?v=try-it-v10')).text());
   await py.runPythonAsync('from simulation import reset_task, advance');
   ready=true;postMessage({type:'ready'});
 })().catch(()=>postMessage({type:'error',message:'The simulator could not load. Please reload or try a current browser.'}));

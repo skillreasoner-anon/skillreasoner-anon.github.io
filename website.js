@@ -270,15 +270,15 @@
   let demoLoaded = false;
   el('load-demo').addEventListener('click', () => {
     if (demoLoaded) return;
-    demoLoaded = true; el('load-demo').disabled = true; el('load-demo').textContent = 'Simulation loading…';
-    el('status').textContent = 'Loading local physics engine…';
-    const script = document.createElement('script'); script.src = 'demo/app.js?v=v60-1';
-    script.onerror = () => { demoLoaded = false; el('load-demo').disabled = false; el('load-demo').textContent = 'Retry loading simulation'; el('status').textContent = 'Unable to load simulation code. Please try again.'; };
+    demoLoaded = true; el('load-demo').disabled = true; el('load-demo').textContent = 'Loading…';
+    el('status').textContent = 'Loading the demo…';
+    const script = document.createElement('script'); script.src = 'demo/app.js?v=try-it-v10';
+    script.onerror = () => { demoLoaded = false; el('load-demo').disabled = false; el('load-demo').textContent = 'Retry loading demo'; el('status').textContent = 'Unable to load the demo. Please try again.'; };
     document.body.append(script);
   });
   const demoStateObserver = new MutationObserver(() => {
     if (!el('task').disabled) {
-      el('load-demo').textContent = 'Simulation ready'; el('demo-load-note').textContent = 'Use the mouse, touchpad, or arrow keys to control the pusher.';
+      el('load-demo').parentElement.hidden = true;
       demoStateObserver.disconnect();
     }
   });
@@ -290,7 +290,6 @@
       if (entry.target.id === 'learning') stopLearning();
       if (entry.target.id === 'method') stopExplanation();
       if (entry.target.id === 'rollouts') stopRollout();
-      if (entry.target.id === 'try-it' && demoLoaded && !el('pause').disabled && el('pause').textContent === 'Pause') el('pause').click();
     }), {threshold:0});
     ['learning','method','rollouts','try-it'].forEach(id => observer.observe(el(id)));
     const videos = new IntersectionObserver(entries => entries.forEach(entry => { if (!entry.isIntersecting) entry.target.pause(); }));

@@ -77,6 +77,9 @@ class Simulation:
 sim=None
 def reset_task(payload):
     global sim
-    sim=Simulation(json.loads(payload));return json.dumps(sim.state())
+    from sampling import sample_task
+    template=json.loads(payload);task=sample_task(template,template['seed'])
+    sim=Simulation(task)
+    return json.dumps(dict(sim.state(),start=task['start'],goal=task['goal'],seed=task['seed']))
 def advance(payload):
     return json.dumps(sim.step(json.loads(payload)))
