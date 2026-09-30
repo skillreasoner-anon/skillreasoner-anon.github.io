@@ -297,6 +297,7 @@
     });
     document.querySelectorAll('[data-rollout]').forEach(button => { button.disabled=false; button.setAttribute('aria-pressed', String(button.dataset.rollout === key)); });
     el('recorded-method').value = method;
+    el('method-selected-text').textContent = methodLabel(method);
     buildTimeline(); render(); updateResults();
   }
   function tick(timestamp) {
@@ -337,9 +338,6 @@
     for (const [group, label] of Object.entries(groups)) {
       const heading = document.createElement('h4'); heading.textContent = label; chart.append(heading);
       if (group === 'ours') {
-        const axis = document.createElement('div'); axis.className = 'bar-axis';
-        [0,50,100].forEach(value => { const tick=document.createElement('span'); tick.textContent=`${value}%`; axis.append(tick); });
-        chart.append(axis);
         const computeLabel = document.createElement('p'); computeLabel.className = 'compute-label';
         computeLabel.textContent = 'Test-Time Compute'; chart.append(computeLabel);
       }

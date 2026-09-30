@@ -78,9 +78,10 @@
 <section id="rollouts">
   <div class="section-heading"><h2>Simulation Results</h2></div>
   <p>We extend Push-T to goal-conditioned, maze-like layouts. A circular pusher maneuvers a T-shaped object through narrow passages to a target pose.</p>
+  <aside class="selection-notice" aria-label="How to explore recordings"><strong>Explore the recordings</strong> Select an environment, a method, and an outcome below. Then choose an episode to watch.</aside>
   <div class="recording-controls">
     <fieldset><legend>Environment</legend><div class="rollout-tabs"><button data-rollout="narrow_door" aria-pressed="true" disabled>Narrow Passage</button><button data-rollout="multi_room" aria-pressed="false" disabled>Multi-Room</button><button data-rollout="three_door" aria-pressed="false" disabled>Winding Maze</button></div></fieldset>
-    <div class="method-control"><label for="recorded-method">Method<select id="recorded-method" disabled><option value="ours">SkillReasoner (Ours)</option></select></label></div>
+    <div class="method-control"><label for="recorded-method">Method<span class="method-select-wrap"><span id="method-selected-text" aria-hidden="true">SkillReasoner (Ours)</span><select id="recorded-method" disabled><option value="ours">SkillReasoner (Ours)</option></select></span></label></div>
     <fieldset><legend>Outcome</legend><div class="outcome-tabs"><button data-outcome="success" aria-pressed="true" disabled>Success</button><button data-outcome="failure" aria-pressed="false" disabled>Failure</button></div></fieldset>
   </div>
   <div class="results-layout">
