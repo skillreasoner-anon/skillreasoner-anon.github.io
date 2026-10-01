@@ -36,7 +36,7 @@
     <rect x="140" y="240" width="180" height="60" rx="4" class="learning-module"/>
     <text x="230" y="276" text-anchor="middle">Skill Encoder <tspan class="math-symbol">Q</tspan></text>
     <path d="M332 270H371" class="learning-flow" marker-end="url(#learn-arrow)"/>
-    <g class="learning-tokens"><rect x="386" y="254" width="29" height="32"/><rect x="426" y="254" width="29" height="32"/><rect x="466" y="254" width="29" height="32"/></g>
+    <g class="learning-tokens"><rect x="382" y="254" width="24" height="32"/><rect x="413" y="254" width="24" height="32"/><rect x="444" y="254" width="24" height="32"/><rect x="475" y="254" width="24" height="32"/></g>
     <text x="441" y="333" text-anchor="middle" class="learning-caption">Discrete Tokens <tspan class="math-symbol">u</tspan></text>
     <path d="M507 270H546" class="learning-flow" marker-end="url(#learn-arrow)"/>
     <rect x="560" y="240" width="180" height="60" rx="4" class="learning-module"/>
