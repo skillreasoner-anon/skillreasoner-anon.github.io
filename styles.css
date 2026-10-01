@@ -188,3 +188,6 @@ body{padding-left:244px;padding-right:32px}
 @media(max-width:700px){.race-grid{gap:10px}.race-player-heading{display:block;min-height:65px}.race-player-heading h3{font-size:16px}.race-player-heading span,.race-match,.race-recording{font-size:12px}.race-grid #touchpad{font-size:12px;min-height:110px;padding:10px}.race-toolbar label{flex:1;min-width:110px}.race-toolbar select{width:100%;max-width:none}.race-clock{font-size:13px}}
 /* The section navigation is now fixed; no header space is reserved for it. */
 .paper-header{padding-bottom:20px}.paper-header h1{margin-bottom:0}
+
+.title-brand{white-space:nowrap}.title-brand>span{color:#9b9387;font-weight:400}.paper-tldr{margin:18px 0 0;font-size:18px;line-height:1.6;color:var(--muted)}.paper-tldr strong{color:var(--ink);margin-right:7px}
+@media(max-width:700px){.race-grid{grid-template-columns:minmax(0,1fr);gap:28px}.race-player-heading{display:flex;min-height:36px}.race-player-heading h3{font-size:20px}.race-player-heading span,.race-match,.race-recording{font-size:14px}.race-grid #touchpad{width:100%;min-height:160px;font-size:15px;padding:16px}.paper-tldr{font-size:17px}}
