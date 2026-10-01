@@ -1,4 +1,4 @@
-/* A staged reveal of saved beam candidates; never a synthetic planner rollout. */
+/* Wall-clear presentation of the skill-search loop, derived from saved candidates. */
 (() => {
   'use strict';
   const section = document.getElementById('search-story');
@@ -9,7 +9,7 @@
   const names = ['Explore possible futures', 'Bring a route into focus', 'Execute the first skill', 'Observe. Search again.'];
   const copies = ['The learned model predicts where different skill sequences could take the object.', 'Compare goal progress, predicted risk, and cost-to-go. Keep the selected sequence.', 'Decode just the first skill into actions. The rest remains a prediction.', 'Use the new observation as the starting point for another search.'];
   let data, time = 0, last = null, playing = false, visible = false, raf = null, lastKey = '';
-  const seconds = 9, phases = [0, 3.2, 5.2, 7.7];
+  const seconds = 9, playbackRate = 2;
   const shape = [[-60,0],[60,0],[60,30],[15,30],[15,120],[-15,120],[-15,30],[-60,30]];
   function pose(p, fill, stroke, alpha = 1) {
     ctx.save();ctx.globalAlpha=alpha;ctx.translate(p[0],p[1]);ctx.rotate(p[2]);ctx.beginPath();
@@ -38,17 +38,17 @@
     // Show retained alternatives first, then fade them as the selected route emerges.
     cycle.candidates.filter(c=>!c.selected).forEach((c,i)=>{
       const alpha=phase===0?.48:phase===1?.48*(1-(t-3.2)/2)*.8+.07:.06;
-      path([origin,...c.points],i%2?'#b78d59':'#829b9a',alpha,2.5,(t-i*.16)/2.4);
+      path(c.route,i%2?'#b78d59':'#829b9a',alpha,2.5,(t-i*.16)/2.4);
       if(phase<2)c.points.forEach((p,j)=>{if(j/c.points.length<t/3.2){ctx.beginPath();ctx.arc(p[0],p[1],3,0,Math.PI*2);ctx.fillStyle=`rgba(157,135,105,${alpha})`;ctx.fill();}});
     });
     const chosenAlpha=phase===0?.35:phase===1?1:phase===2?.45:.15;
-    const route=[origin,...chosen.points];
+    const route=chosen.route;
     path(route,phase===0?'#829b9a':'#b86f56',chosenAlpha,3.5,t/3.2);
     if(phase===1){
       path(route,'#cd8068',.12,13);
       chosen.points.forEach((p,j)=>{ctx.beginPath();ctx.arc(p[0],p[1],3.8,0,Math.PI*2);ctx.fillStyle='#b86f56';ctx.fill();if(j%5===0||j===chosen.points.length-1)pose(p,'#cd8068','#a56a56',.13);});
     }
-    if(phase>=2)path(cycle.states.slice(0,Math.max(1,Math.floor(amount*(cycle.states.length-1))+1)).map(s=>s.slice(2)),'#596f72',.85,3);
+    if(phase>=2)path([cycle.states[0].slice(2),...cycle.execution_routes.slice(0,Math.floor(amount*(cycle.states.length-1))).flat()],'#596f72',.85,3);
     if(phase===2)pose(chosen.points[0],'#cd8068','#a56a56',.2);
     pose(state.slice(2),'#758e92','#4c6469');
     ctx.beginPath();ctx.arc(state[0],state[1],15,0,Math.PI*2);ctx.fillStyle='#c5a06c';ctx.fill();ctx.strokeStyle='#98794f';ctx.lineWidth=2;ctx.stroke();
@@ -69,7 +69,7 @@
     if(playing&&visible&&!document.hidden)raf=requestAnimationFrame(tick);
   }
   function tick(now) {
-    raf=null;if(last!==null)time=Math.min(seconds*data.cycles.length,time+Math.min(.1,(now-last)/1000));last=now;draw();
+    raf=null;if(last!==null)time=Math.min(seconds*data.cycles.length,time+playbackRate*Math.min(.1,(now-last)/1000));last=now;draw();
     if(time>=seconds*data.cycles.length){playing=false;sync();return;}
     if(playing&&visible&&!document.hidden)raf=requestAnimationFrame(tick);
   }

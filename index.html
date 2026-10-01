@@ -13,11 +13,18 @@
 <body>
 <a class="skip-link" href="#overview">Skip to content</a>
 
-<header id="top" class="paper-header"><p class="eyebrow">Anonymous Submission</p><h1>Latent Skill Acquisition and Composition<br class="desktop-break"> for Contact-Rich Manipulation</h1><nav class="page-nav" aria-label="Page sections"><div class="nav-inner"><a class="wordmark" href="#overview">Abstract</a><div class="nav-links"><a href="#method">Overview of SkillReasoner</a><a href="#learning">How SkillReasoner is Learned</a><a href="#search-story">Inside the Search</a><a href="#rollouts">Simulation Results</a><a href="#real-world">Real-World Results</a><a href="#try-it">Try It Yourself</a></div></div></nav></header>
+<header id="top" class="paper-header"><p class="eyebrow">Anonymous Submission</p><h1>Latent Skill Acquisition and Composition<br class="desktop-break"> for Contact-Rich Manipulation</h1><nav class="page-nav" aria-label="Page sections"><div class="nav-inner"><a class="wordmark" href="#overview">Abstract</a><div class="nav-links"><a href="#method">Overview of SkillReasoner</a><a href="#learning">How SkillReasoner is Learned</a><a href="#rollouts">Simulation Results</a><a href="#real-world">Real-World Results</a><a href="#try-it">Try It Yourself</a></div></div></nav></header>
 <main>
 <section id="overview">
 <div class="section-heading"><h2>Abstract</h2></div>
 <p>Human-level generalization in manipulation requires composing known behaviors to reach novel goals in scenarios never seen in training. The challenge sharpens in contact-rich settings, where behaviors must be recomposed at the granularity of contact rather than of a semantic subtask. Without relying on per-task demonstrations, a promising approach is to leverage test-time compute to perform <em>physical reasoning</em> that searches for novel solutions and improves them incrementally during deployment. To effectively perform search in the large space of motions, we propose SkillReasoner, which learns temporal abstractions of actions (i.e., skills) from unstructured offline interactions, and then reasons over and recomposes them at test time. Crucial to the formulation is a latent skill space learned with varying temporal horizons, so that composition can happen at varying granularity, as required by different stages of the task, while minimizing the number of decisions. To realize a novel goal at test time, the robot searches over latent skill sequences in its imagination, decodes a chosen skill into low-level actions, and replans in closed loop, up to 30 Hz. We demonstrate on a series of contact-rich real-world and simulated tasks that the robot chains behaviors to achieve novel goals that require far longer behaviors than those seen in training, and adapts zero-shot to unseen perturbations, changing dynamics, and constraints, all trained purely from unstructured play data without task-specific demonstrations.</p>
+  <figure class="search-figure" id="search-story">
+    <div class="search-stage">
+      <div class="search-board"><div class="search-board-heading"><span>Inside the Search</span><span id="search-cycle">Replan 1 / 4</span></div><canvas id="search-canvas" width="816" height="816" role="img" aria-label="Beam-search illustration: candidate object poses, selected route, goal, and first-skill execution"></canvas><div class="search-legend"><span>● Current</span><span>— Imagined</span><span>▧ Goal</span></div></div>
+      <div class="search-narrative"><ol id="search-steps"><li class="active">Imagine</li><li>Select</li><li>Act</li><li>Replan</li></ol><div><p class="search-kicker">Closed-Loop Skill Search</p><h3 id="search-phase-title">Explore possible futures</h3><p id="search-caption">Loading saved search…</p></div><div class="search-plan"><p>One sequence. Only the first skill acts.</p><div id="search-skills" aria-label="Selected skill durations"></div><span id="search-tail"></span></div></div>
+    </div>
+    <div class="search-controls"><button id="search-play" aria-pressed="false" disabled>Play</button><button id="search-replay" disabled>Replay</button><label for="search-seek">Search sequence</label><input id="search-seek" type="range" min="0" max="36" step="0.05" value="0" disabled></div>
+  </figure>
 </section>
 
 <section id="method"><div class="section-heading"><h2>Overview of SkillReasoner</h2></div><p>At test time, beam search plans a sequence of latent skills, the skill decoder executes the first selected skill, and then replans using new observations.</p>
@@ -62,18 +69,7 @@
   </figure>
 </section>
 
-<section id="search-story">
-  <div class="section-heading"><h2>Many Possible Futures. One Next Move.</h2></div>
-  <p>SkillReasoner imagines sequences of skills, selects a promising route, and executes only the first skill. Then it looks again.</p>
-  <figure class="search-figure">
-    <div class="search-stage">
-      <div class="search-board"><div class="search-board-heading"><span>Inside the Search</span><span id="search-cycle">Replan 1 / 4</span></div><canvas id="search-canvas" width="816" height="816" role="img" aria-label="Saved beam-search candidate object poses, selected imagined route, goal, and recorded object and pusher execution"></canvas><div class="search-legend"><span>● Observed</span><span>— Imagined</span><span>▧ Goal</span></div></div>
-      <div class="search-narrative"><ol id="search-steps"><li class="active">Imagine</li><li>Select</li><li>Act</li><li>Replan</li></ol><div><p class="search-kicker">Closed-Loop Skill Search</p><h3 id="search-phase-title">Explore possible futures</h3><p id="search-caption">Loading saved search…</p></div><div class="search-plan"><p>One sequence. Only the first skill acts.</p><div id="search-skills" aria-label="Selected skill durations"></div><span id="search-tail"></span></div></div>
-    </div>
-    <div class="search-controls"><button id="search-play" aria-pressed="false" disabled>Play</button><button id="search-replay" disabled>Replay</button><label for="search-seek">Search sequence</label><input id="search-seek" type="range" min="0" max="36" step="0.05" value="0" disabled></div>
-    <figcaption>Four consecutive replans from a recorded Winding Maze run. Lines connect saved predicted object poses; the reveal is staged and slowed down to show candidate selection. Solid motion is recorded execution.</figcaption>
-  </figure>
-</section>
+
 
 <section id="rollouts">
   <div class="section-heading"><h2>Simulation Results</h2></div>
