@@ -2,6 +2,22 @@
 (() => {
   'use strict';
   const el = id => document.getElementById(id);
+  const sectionLinks = Array.from(document.querySelectorAll('.page-nav a'));
+  sectionLinks.forEach(link => link.title = link.textContent.trim());
+  function updateSectionNavigation() {
+    let active = sectionLinks[0];
+    for (const link of sectionLinks) {
+      if (document.querySelector(link.getAttribute('href')).getBoundingClientRect().top <= 160) active = link;
+    }
+    sectionLinks.forEach(link => link === active ? link.setAttribute('aria-current','location') : link.removeAttribute('aria-current'));
+  }
+  let navigationFrame = null;
+  window.addEventListener('scroll', () => {
+    if (navigationFrame !== null) return;
+    navigationFrame = requestAnimationFrame(() => { navigationFrame=null; updateSectionNavigation(); });
+  }, {passive:true});
+  updateSectionNavigation();
+
   function symbolText(node, text) {
     const svg = node.namespaceURI === 'http://www.w3.org/2000/svg';
     node.replaceChildren(...text.split(/(\b[EQDGPFVzhugdyH]\b)/g).map(part => {

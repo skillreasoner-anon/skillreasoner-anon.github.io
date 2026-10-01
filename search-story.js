@@ -6,8 +6,16 @@
   const play = document.getElementById('search-play'), replay = document.getElementById('search-replay');
   const slider = document.getElementById('search-seek'), caption = document.getElementById('search-caption');
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
-  const names = ['Explore possible futures', 'Bring a route into focus', 'Execute the first skill', 'Observe. Search again.'];
-  const copies = ['The learned model predicts where different skill sequences could take the object.', 'Compare goal progress, predicted risk, and cost-to-go. Keep the selected sequence.', 'Decode just the first skill into actions. The rest remains a prediction.', 'Use the new observation as the starting point for another search.'];
+  // Verbatim prose from sections/03_method_v2.tex, lines 59, 62, 75–76.
+  const names = ['Beam search', 'Goal evaluation', 'The first skill', 'Replans in closed loop'];
+  const copies = ['We use beam search as the high-level policy in the latent skill space.', 'Each imagined trajectory is scored by a goal evaluation function c_g at its endpoint, a risk proxy c_r along its rollout, and a learned cost-to-go c_h estimating remaining low-level actions.', 'After obtaining the lowest-cost skill sequence, the low-level policy converts the first skill into actions with predicted duration.', 'Then the robot executes these actions open-loop, observes the environment, and replans in closed loop.'];
+  function paperCopy(text) {
+    caption.replaceChildren(...text.split(/(c_[grh])/).map(part => {
+      if (!/^c_[grh]$/.test(part)) return document.createTextNode(part);
+      const symbol=document.createElement('span');symbol.className='math-symbol';symbol.textContent='c';
+      const sub=document.createElement('sub');sub.textContent=part[2];symbol.append(sub);return symbol;
+    }));
+  }
   let data, time = 0, last = null, playing = false, visible = false, raf = null, lastKey = '';
   const seconds = 9, playbackRate = 2;
   const shape = [[-60,0],[60,0],[60,30],[15,30],[15,120],[-15,120],[-15,30],[-60,30]];
@@ -57,10 +65,10 @@
     slider.value=String(time);document.getElementById('search-cycle').textContent=`Replan ${index+1} / ${data.cycles.length}`;
     const key=`${index}/${phase}`;
     if(key!==lastKey){
-      lastKey=key;caption.textContent=copies[phase];document.getElementById('search-phase-title').textContent=names[phase];
+      lastKey=key;paperCopy(copies[phase]);document.getElementById('search-phase-title').textContent=names[phase];
       document.querySelectorAll('#search-steps li').forEach((li,i)=>{li.classList.toggle('active',i===phase);if(i===phase)li.setAttribute('aria-current','step');else li.removeAttribute('aria-current');});
       const strip=document.getElementById('search-skills');strip.replaceChildren(...chosen.durations.slice(0,7).map((d,i)=>{const span=document.createElement('span');span.textContent=`${(d/data.control_hz).toFixed(1)}s`;if(i===0)span.className='first';return span;}));
-      document.getElementById('search-tail').textContent=chosen.durations.length>7?`+ ${chosen.durations.length-7} imagined skills`:'';
+      document.getElementById('search-tail').textContent=chosen.durations.length>7?`+ ${chosen.durations.length-7}`:'';
     }
   }
   function sync() {
