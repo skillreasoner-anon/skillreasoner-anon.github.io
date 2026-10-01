@@ -6,9 +6,9 @@
   const play = document.getElementById('search-play'), replay = document.getElementById('search-replay');
   const slider = document.getElementById('search-seek'), caption = document.getElementById('search-caption');
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
-  // Verbatim prose from sections/03_method_v2.tex, lines 59, 62, 75–76.
+  // Trimmed phrases from sections/03_method_v2.tex, lines 61–62 and 75–76.
   const names = ['Beam search', 'Goal evaluation', 'The first skill', 'Replans in closed loop'];
-  const copies = ['We use beam search as the high-level policy in the latent skill space.', 'Each imagined trajectory is scored by a goal evaluation function c_g at its endpoint, a risk proxy c_r along its rollout, and a learned cost-to-go c_h estimating remaining low-level actions.', 'After obtaining the lowest-cost skill sequence, the low-level policy converts the first skill into actions with predicted duration.', 'Then the robot executes these actions open-loop, observes the environment, and replans in closed loop.'];
+  const copies = ['Sampling candidate skills · Rolling them forward with a dynamics function', 'Goal evaluation · Risk proxy · Learned cost-to-go', 'First skill into actions · Predicted duration', 'Observes the environment · Replans in closed loop'];
   function paperCopy(text) {
     caption.replaceChildren(...text.split(/(c_[grh])/).map(part => {
       if (!/^c_[grh]$/.test(part)) return document.createTextNode(part);
@@ -17,7 +17,7 @@
     }));
   }
   let data, time = 0, last = null, playing = false, visible = false, raf = null, lastKey = '';
-  const seconds = 9, playbackRate = 2;
+  const seconds = 9, playbackRate = 1;
   const shape = [[-60,0],[60,0],[60,30],[15,30],[15,120],[-15,120],[-15,30],[-60,30]];
   function pose(p, fill, stroke, alpha = 1) {
     ctx.save();ctx.globalAlpha=alpha;ctx.translate(p[0],p[1]);ctx.rotate(p[2]);ctx.beginPath();
