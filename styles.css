@@ -180,3 +180,9 @@ body{padding-left:244px;padding-right:32px}
 #window-explanation .window-example-controls{gap:12px;justify-content:flex-start}
 #window-explanation .window-definition{margin:8px 0 0;font-size:14px}
 #learning-diagram .learning-module+text,#learning-diagram .frozen-modules text{font-size:18px}
+
+/* A single simulation clock drives both sides of the shared-start race. */
+.race-toolbar{align-items:end;flex-wrap:wrap}.race-clock{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 0;border-block:1px solid var(--line);font-size:15px;margin:20px 0}.race-clock strong{font-variant-numeric:tabular-nums;margin-left:12px;font-size:23px;font-weight:400}
+.race-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin:18px 0}.race-player{min-width:0}.race-player-heading{display:flex;justify-content:space-between;align-items:baseline;gap:8px;min-height:40px}.race-player-heading h3{font-size:20px;margin:0}.race-player-heading span{font-size:14px;font-variant-numeric:tabular-nums;color:var(--muted)}
+#race-opponent,#world{width:100%;height:auto;aspect-ratio:1;border:1px solid var(--line);background:#fff}.race-match{display:flex;justify-content:space-between;font-size:15px;margin-top:8px}.race-player progress{width:100%}.race-recording{font-size:14px;color:var(--muted);margin:12px 0}.race-result{padding:16px;border-left:3px solid var(--accent);background:#eee8df;font-size:18px}.race-grid #touchpad{margin-top:12px}.race-grid canvas:focus-visible{outline-offset:1px}
+@media(max-width:700px){.race-grid{gap:10px}.race-player-heading{display:block;min-height:65px}.race-player-heading h3{font-size:16px}.race-player-heading span,.race-match,.race-recording{font-size:12px}.race-grid #touchpad{font-size:12px;min-height:110px;padding:10px}.race-toolbar label{flex:1;min-width:110px}.race-toolbar select{width:100%;max-width:none}.race-clock{font-size:13px}}

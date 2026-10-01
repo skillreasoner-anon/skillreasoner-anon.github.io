@@ -403,9 +403,9 @@
   el('load-demo').addEventListener('click', () => {
     if (demoLoaded) return;
     demoLoaded = true; el('load-demo').disabled = true; el('load-demo').textContent = 'Loading…';
-    el('status').textContent = 'Loading the demo…';
-    const script = document.createElement('script'); script.src = 'demo/app.js?v=try-it-v16';
-    script.onerror = () => { demoLoaded = false; el('load-demo').disabled = false; el('load-demo').textContent = 'Retry Loading Demo'; el('status').textContent = 'Unable to load the demo. Please try again.'; };
+    el('status').textContent = 'Loading the race…';
+    const script = document.createElement('script'); script.src = 'demo/app.js?v=race-v27';
+    script.onerror = () => { demoLoaded = false; el('load-demo').disabled = false; el('load-demo').textContent = 'Retry Loading Race'; el('status').textContent = 'Unable to load the demo. Please try again.'; };
     document.body.append(script);
   });
   const demoStateObserver = new MutationObserver(() => {
@@ -438,7 +438,7 @@
       [recordings, results, baselineRecordings] = data;
       buildResults(); selectRecording(selected);
       // Preview the interactive task without downloading its 27 MB runtime.
-      scene(el('world').getContext('2d'),el('world'),recordings.narrow_door.success[0],recordings.narrow_door.success[0].states[0]);
+      for (const id of ['world','race-opponent']) scene(el(id).getContext('2d'),el(id),recordings.narrow_door.success[0],recordings.narrow_door.success[0].states[0]);
     } catch (error) {
       el('rollout-error').hidden = false;
       el('rollout-error').textContent = 'Recorded playback could not load. Please reload the page. The physics demo remains available.';

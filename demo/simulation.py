@@ -59,7 +59,8 @@ class Simulation:
         self.agent.position=task['start'][:2];self.agent.velocity=(0,0)
         self.block.angle=task['start'][4];self.block.position=task['start'][2:4]
         self.block.velocity=(0,0);self.block.angular_velocity=0
-        self.space.step(.00125)
+        if not task.get("recorded_start", False):
+            self.space.step(.00125)
         self.target=list(self.agent.position);self.elapsed=0
         self.goals=polygons(task['goal'])
     def step(self,target,steps=80):
@@ -82,9 +83,15 @@ sim=None
 def reset_task(payload):
     global sim
     from sampling import sample_task
-    template=json.loads(payload);task=sample_task(template,template['seed'])
+    template=json.loads(payload)
+    if template.get('recorded_start', False):
+        task=template
+        if len(task['start'])!=5 or len(task['goal'])!=3 or not all(math.isfinite(float(v)) for v in task['start']+task['goal']):
+            raise ValueError('Invalid recorded start or goal')
+    else:
+        task=sample_task(template,template['seed'])
     sim=Simulation(task)
-    return json.dumps(dict(sim.state(),start=task['start'],goal=task['goal'],seed=task['seed']))
+    return json.dumps(dict(sim.state(),start=task['start'],goal=task['goal'],seed=task.get('seed'),recording_id=task.get('recording_id')))
 def advance(payload):
     request=json.loads(payload)
     if isinstance(request,list):
