@@ -52,16 +52,8 @@
     <div id="learning-layout" data-learning-stage="0">
       <div id="learning-visual" class="diagram-scroll" tabindex="0" role="region" aria-label="Learning diagram; scroll horizontally on small screens"><p class="illustration-loading">Loading diagram…</p></div>
       <aside id="window-explanation" aria-label="Action reconstruction explanation" hidden>
-        <dl class="window-notes">
-          <dt><span class="window-key" aria-hidden="true"></span>Sample Interaction Windows</dt>
-          <dd>The highlight marks one interaction window. Sample its duration <span class="math-symbol">d</span> uniformly from 1,…,<span class="math-symbol">H</span>.</dd>
-          <dt>Skill Encoder <span class="math-symbol">Q</span></dt>
-          <dd>Compresses each window into a fixed-length sequence of discrete skill tokens <span class="math-symbol">u</span>.</dd>
-          <dt>Skill Decoder <span class="math-symbol">D</span>(<span class="math-symbol">z</span><sub>t</sub>,<span class="math-symbol">u</span>)</dt>
-          <dd>Reconstructs its actions and predicts the duration used to terminate the skill.</dd>
-        </dl>
         <div class="window-example-controls"><output id="window-example" aria-live="polite">Window Duration: d = 2</output><span id="window-position">Steps 3–4</span><div class="window-buttons"><button id="window-play" aria-pressed="false" disabled>Play Windows</button><button id="next-window" disabled>Next Window</button></div></div>
-        <p class="window-definition"><span class="math-symbol">d</span>: sampled duration. <span class="math-symbol">H</span>: maximum window duration.</p>
+        <p class="window-definition">Duration <span class="math-symbol">d</span> ∼ Unif{1,…,<span class="math-symbol">H</span>}</p>
       </aside>
     </div>
     <p class="diagram-scroll-hint">Scroll the diagram horizontally to inspect each stage.</p>

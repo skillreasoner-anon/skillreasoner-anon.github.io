@@ -68,7 +68,7 @@
     el('sampled-window').dataset.start = String(start);
     el('sampled-window').dataset.duration = String(duration);
     el('window-bracket').setAttribute('d', `M${left} 169V177H${left+width}V169`);
-    el('window-flow').setAttribute('d', `M${left+width/2} 177V190H353V196`);
+    el('window-flow').setAttribute('d', `M${left+width/2} 177V216H230V232`);
     symbolText(el('sampled-duration'), `Sampled Window · d = ${duration}`);
     symbolText(el('window-example'), `Window Duration: d = ${duration}`);
     el('window-position').textContent = `Steps ${start+1}–${start+duration}`;

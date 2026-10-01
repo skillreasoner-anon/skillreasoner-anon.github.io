@@ -173,3 +173,10 @@ body{padding-left:244px;padding-right:32px}
 @media(max-width:1100px){body{padding-left:60px;padding-right:20px}.page-nav{left:8px;top:28px;width:32px;max-height:calc(100dvh - 56px);overflow:visible}.page-nav a{font-size:0;padding:10px 0;min-height:42px;text-align:center;position:relative}.page-nav a:before{counter-increment:section;content:counter(section,decimal-leading-zero);font-size:12px;line-height:22px}.page-nav a:hover,.page-nav a[aria-current="location"]{padding-left:0}.page-nav a:focus-visible:after,.page-nav a:hover:after{content:attr(title);position:absolute;left:38px;top:0;background:#f6f3ec;border:1px solid var(--line);padding:8px 12px;width:190px;text-align:left;font-size:14px;box-shadow:0 2px 8px #20202015}}
 @media(max-width:700px){body{padding-left:52px;padding-right:14px}.page-nav{left:5px;width:30px}.search-board-heading{font-size:12px;gap:10px}}
 @media(max-width:1100px){.score-tooltip{width:min(300px,calc(100vw - 80px))}}
+
+/* Shared diagram scale and module typography; sampling controls below the canvas. */
+#learning-layout[data-learning-stage="1"]{display:block}
+#window-explanation{margin-top:12px;padding:14px 0 0;border-left:0;border-top:1px solid var(--line)}
+#window-explanation .window-example-controls{gap:12px;justify-content:flex-start}
+#window-explanation .window-definition{margin:8px 0 0;font-size:14px}
+#learning-diagram .learning-module+text,#learning-diagram .frozen-modules text{font-size:18px}
