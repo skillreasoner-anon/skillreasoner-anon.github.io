@@ -165,7 +165,7 @@ tspan.math-sub{font-size:70%;baseline-shift:sub}
 
 /* Persistent section rail, using the page's typography and warm paper surface. */
 body{padding-left:244px;padding-right:32px}
-.page-nav{position:fixed;left:28px;top:64px;width:184px;max-height:calc(100dvh - 96px);overflow-y:auto;margin:0;z-index:9;font-size:15px}
+.page-nav{position:fixed;left:max(40px,calc(50vw - 668px));top:64px;width:184px;max-height:calc(100dvh - 96px);overflow-y:auto;margin:0;z-index:9;font-size:15px}
 .nav-inner,.nav-links{display:flex;flex-direction:column;align-items:stretch;gap:0}.nav-inner{counter-reset:section}
 .page-nav a{display:block;text-decoration:none;font-weight:400;line-height:1.5;padding:11px 12px;border-left:1px solid var(--line);color:var(--muted)}
 .page-nav a:hover,.page-nav a[aria-current="location"]{color:var(--ink);border-left:2px solid var(--accent);background:#eee8df;padding-left:11px}
