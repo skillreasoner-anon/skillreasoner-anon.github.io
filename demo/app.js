@@ -18,7 +18,7 @@ function draw(){if(!task||!state||!recording)return;drawSide(ctx,canvas,state.bl
 function status(text){$('status').textContent=text;}
 function seconds(t){return `${t.toFixed(2)} s`;}
 function release(e){if(e&&e.pointerId!==inputPointer)return;const id=inputPointer;inputPointer=null;held=false;lastTouch=null;for(const node of [canvas,$('touchpad')]){if(id!==null&&node.hasPointerCapture(id))node.releasePointerCapture(id);}$('touchpad').classList.remove('active');}
-function available(){return ready&&racing&&!resetting&&!failed&&!won;}
+function available(){return ready&&(racing||raceElapsed===0)&&!resetting&&!failed&&!won;}
 function reset(){
  if(!ready)return;
  generation++;racing=false;raceElapsed=0;humanFinish=null;opponentDone=false;won=false;failed=false;keys.clear();release();
@@ -27,7 +27,7 @@ function reset(){
  opponentScores=recording.states.map(row=>overlap(row.slice(2)));const finishFrame=opponentScores.findIndex(v=>v>=.95);
  if(finishFrame<=0){failed=true;status('This recording is unavailable. Choose another episode.');return;}
  opponentFinish=finishFrame/recording.control_hz;opponentFrame=0;state={pusher:task.start.slice(0,2),block:task.start.slice(2),overlap:opponentScores[0],elapsed:0};target=state.pusher.slice();
- $('race-result').hidden=true;$('race-start').disabled=true;$('status').classList.remove('success');$('human-finish').textContent='Ready';$('opponent-finish').textContent='Ready';
+ $('race-result').hidden=true;$('status').classList.remove('success');$('human-finish').textContent='Ready';$('opponent-finish').textContent='Ready';
  busy=true;resetting=true;worker.postMessage({type:'reset',task,generation});status('Preparing the shared start and goal…');renderMetrics();draw();
 }
 function episodes(){const rows=recordings[tasks[+$('task').value].id].success;$('race-episode').replaceChildren(...rows.map((r,i)=>new Option(`${i+1} of ${rows.length}`,i)));reset();}
@@ -40,7 +40,7 @@ function advanceRace(){
  opponentFrame=Math.min(Math.floor((Math.min(raceElapsed,opponentFinish)+1e-8)*recording.control_hz),recording.control_steps);
  if(!opponentDone&&raceElapsed+1e-8>=opponentFinish){opponentDone=true;$('opponent-finish').textContent=`Finished · ${seconds(opponentFinish)}`;if(!won)status(`SkillReasoner finished in ${seconds(opponentFinish)}. Keep going!`);}
  if(won&&opponentDone||raceElapsed+1e-8>=LIMIT){
-  racing=false;keys.clear();release();$('race-start').disabled=true;
+  racing=false;keys.clear();release();
   let result;
   if(humanFinish===null){$('human-finish').textContent='Time limit';result=`SkillReasoner: ${seconds(opponentFinish)}. You: time limit reached.`;}
   else if(Math.abs(humanFinish-opponentFinish)<1e-8)result=`Tie! Both finished in ${seconds(humanFinish)}.`;
@@ -49,14 +49,14 @@ function advanceRace(){
  }
  renderMetrics();draw();
 }
-$('race-start').addEventListener('click',()=>{if(!ready||resetting||failed||racing||raceElapsed>0)return;racing=true;$('race-start').disabled=true;$('human-finish').textContent='Racing';$('opponent-finish').textContent='Racing';status('Go! Match at least 95% of the target.');canvas.focus({preventScroll:true});});
-function direct(e){const r=canvas.getBoundingClientRect();target=[(e.clientX-r.left)/r.width*task.size,(e.clientY-r.top)/r.height*task.size];}
+function startFromInput(){if(!available()||racing)return;racing=true;$('human-finish').textContent='Racing';$('opponent-finish').textContent='Racing';status('Go! Match at least 95% of the target.');}
+function direct(e){const r=canvas.getBoundingClientRect();target=[(e.clientX-r.left)/r.width*task.size,(e.clientY-r.top)/r.height*task.size];if(Math.hypot(target[0]-state.pusher[0],target[1]-state.pusher[1])>.1)startFromInput();}
 canvas.addEventListener('pointerdown',e=>{if(!available()||inputPointer!==null)return;e.preventDefault();inputPointer=e.pointerId;canvas.focus({preventScroll:true});canvas.setPointerCapture(e.pointerId);held=true;direct(e);});
 canvas.addEventListener('pointermove',e=>{if(held&&e.pointerId===inputPointer){e.preventDefault();direct(e);}});
 for(const node of [canvas,$('touchpad')])for(const event of ['pointerup','pointercancel','lostpointercapture'])node.addEventListener(event,release);
 $('touchpad').addEventListener('pointerdown',e=>{if(!available()||inputPointer!==null)return;e.preventDefault();inputPointer=e.pointerId;$('touchpad').focus({preventScroll:true});$('touchpad').setPointerCapture(e.pointerId);lastTouch=[e.clientX,e.clientY];target=state.pusher.slice();$('touchpad').classList.add('active');});
-$('touchpad').addEventListener('pointermove',e=>{if(!lastTouch||e.pointerId!==inputPointer)return;e.preventDefault();const gain=task.size/canvas.getBoundingClientRect().width;target=[target[0]+(e.clientX-lastTouch[0])*gain,target[1]+(e.clientY-lastTouch[1])*gain].map(x=>Math.max(task.bounds[0]+15,Math.min(task.bounds[1]-15,x)));lastTouch=[e.clientX,e.clientY];});
-for(const node of [canvas,$('touchpad')]){node.addEventListener('contextmenu',e=>e.preventDefault());node.addEventListener('keydown',e=>{if(e.code.startsWith('Arrow')){e.preventDefault();if(available())keys.add(e.code);}});}
+$('touchpad').addEventListener('pointermove',e=>{if(!lastTouch||e.pointerId!==inputPointer)return;e.preventDefault();const gain=task.size/canvas.getBoundingClientRect().width;target=[target[0]+(e.clientX-lastTouch[0])*gain,target[1]+(e.clientY-lastTouch[1])*gain].map(x=>Math.max(task.bounds[0]+15,Math.min(task.bounds[1]-15,x)));if(Math.hypot(e.clientX-lastTouch[0],e.clientY-lastTouch[1])>.1)startFromInput();lastTouch=[e.clientX,e.clientY];});
+for(const node of [canvas,$('touchpad')]){node.addEventListener('contextmenu',e=>e.preventDefault());node.addEventListener('keydown',e=>{if(e.code.startsWith('Arrow')){e.preventDefault();if(available()){keys.add(e.code);startFromInput();}}});}
 window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{keys.clear();release();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){keys.clear();release();}});
 new IntersectionObserver(entries=>{inView=entries[0].isIntersecting;if(!inView){keys.clear();release();}}).observe($('try-it'));
@@ -65,13 +65,13 @@ async function init(){try{
  [tasks,recordings]=await Promise.all(['demo/tasks.json','assets/rollouts.json'].map(async path=>{const r=await fetch(path);if(!r.ok)throw Error('Unavailable');return r.json();}));
  $('task').replaceChildren(...tasks.map((t,i)=>new Option(t.title,i)));
  worker=new Worker('demo/worker.js?v=race-v27');
- worker.onerror=()=>{failed=true;racing=false;busy=false;$('race-start').disabled=true;status('Unable to start physics. Please reload or try a current browser.');};
+ worker.onerror=()=>{failed=true;racing=false;busy=false;status('Unable to start physics. Please reload or try a current browser.');};
  worker.onmessage=({data})=>{
   if(data.type==='ready'){ready=true;for(const id of ['task','race-episode','reset'])$(id).disabled=false;episodes();}
-  else if(data.type==='error'&&(data.generation===undefined||data.generation===generation)){busy=false;failed=true;racing=false;$('race-start').disabled=true;status(data.message);}
+  else if(data.type==='error'&&(data.generation===undefined||data.generation===generation)){busy=false;failed=true;racing=false;status(data.message);}
   else if(data.type==='state'&&data.generation===generation){
    busy=false;state=data.state;
-   if(resetting&&state.goal){resetting=false;target=state.pusher.slice();canvas.dataset.start=JSON.stringify(state.start);canvas.dataset.goal=JSON.stringify(state.goal);canvas.dataset.recordingId=state.recording_id;opponentCanvas.dataset.start=canvas.dataset.start;opponentCanvas.dataset.goal=canvas.dataset.goal;$('race-start').disabled=false;status('Same start and goal. Press Start Race when you’re ready.');renderMetrics();draw();return;}
+   if(resetting&&state.goal){resetting=false;target=state.pusher.slice();canvas.dataset.start=JSON.stringify(state.start);canvas.dataset.goal=JSON.stringify(state.goal);canvas.dataset.recordingId=state.recording_id;opponentCanvas.dataset.start=canvas.dataset.start;opponentCanvas.dataset.goal=canvas.dataset.goal;status('Move your pusher to start both sides together.');renderMetrics();draw();return;}
    raceElapsed=state.elapsed;
    if(state.overlap>=.95&&!won){won=true;humanFinish=raceElapsed;keys.clear();release();$('human-finish').textContent=`Finished · ${seconds(humanFinish)}`;status('You reached the goal! Waiting for SkillReasoner to finish.');}
    advanceRace();

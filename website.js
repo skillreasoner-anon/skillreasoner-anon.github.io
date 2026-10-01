@@ -404,7 +404,7 @@
     if (demoLoaded) return;
     demoLoaded = true; el('load-demo').disabled = true; el('load-demo').textContent = 'Loading…';
     el('status').textContent = 'Loading the race…';
-    const script = document.createElement('script'); script.src = 'demo/app.js?v=race-v27';
+    const script = document.createElement('script'); script.src = 'demo/app.js?v=race-v28';
     script.onerror = () => { demoLoaded = false; el('load-demo').disabled = false; el('load-demo').textContent = 'Retry Loading Race'; el('status').textContent = 'Unable to load the demo. Please try again.'; };
     document.body.append(script);
   });
